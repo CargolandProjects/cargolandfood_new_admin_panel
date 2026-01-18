@@ -13,10 +13,45 @@ export default function Header() {
       return {
         title: "Welcome Back",
         subtitle: "Here's what's happening today",
+        showBadge: false,
       };
     }
 
     const segments = pathname.split("/").filter(Boolean);
+
+    // For orders pages
+    if (segments[0] === "orders") {
+      const subpage = segments[1] || "all";
+      return {
+        title: "Order Management",
+        subtitle: "Orders",
+        badge: subpage.charAt(0).toUpperCase() + subpage.slice(1),
+        badgeCount: "21",
+        showBadge: true,
+      };
+    }
+
+    // For order_management pages
+    if (segments[0] === "order_management") {
+      const subpage = segments[1] || "all";
+      return {
+        title: "Order Management",
+        subtitle: "Orders",
+        badge: subpage.charAt(0).toUpperCase() + subpage.slice(1),
+        badgeCount: "21",
+        showBadge: true,
+      };
+    }
+
+    // For delivery management pages
+    if (segments[0] === "delivery_management") {
+      const subpage = segments[1] || "overview";
+      return {
+        title: "Delivery Management",
+        subtitle: subpage === "personnel-list" ? "Personnel List" : subpage.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+        showBadge: false,
+      };
+    }
 
     if (segments.length === 1) {
       const title = segments[0]
@@ -24,7 +59,7 @@ export default function Header() {
         .split(" ")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
-      return { title, subtitle: "Personnel List" };
+      return { title, subtitle: "Personnel List", showBadge: false };
     }
 
     // For nested routes, first segment is title, rest is subtitle
@@ -45,18 +80,24 @@ export default function Header() {
       )
       .join(" > ");
 
-    return { title, subtitle };
+    return { title, subtitle, showBadge: false };
   };
 
-  const { title, subtitle } = getPageInfo();
+  const { title, subtitle, badge, badgeCount, showBadge } = getPageInfo();
 
   return (
     <header className="h-[72px] bg-white border-b border-gray-100 px-8 flex items-center justify-between sticky top-0 z-30 font-satoshi">
       {/* 1. LEFT: TITLE */}
       <div className="flex-shrink-0">
         <h1 className="text-[#00302E] text-xl font-bold">{title}</h1>
-        {subtitle && (
-          <p className="text-sm text-gray-500 mt-0.5 font-bold">{subtitle}</p>
+        <p className="text-sm text-gray-500 mt-0.5 font-bold">{subtitle}</p>
+        {showBadge && (
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[#F16622] font-bold text-sm">{badge}</span>
+            <span className="bg-[#FFF0E6] text-[#F16622] px-3 py-1 rounded-lg text-xs font-bold">
+              {badgeCount}
+            </span>
+          </div>
         )}
       </div>
 

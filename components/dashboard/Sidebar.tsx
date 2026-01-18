@@ -23,53 +23,53 @@ const sidebarData = [
     children: [
       {
         name: "Orders",
-        href: "/orders",
+        href: "/order_management",
         subChildren: [
           {
             name: "All",
-            href: "/orders/all",
+            href: "/order_management/all",
             count: 2,
             color: "bg-blue-100 text-blue-600",
           },
           {
             name: "Scheduled",
-            href: "/orders/scheduled",
+            href: "/order_management/scheduled",
             count: 2,
             color: "bg-blue-100 text-blue-600",
           },
           {
             name: "Pending",
-            href: "/orders/pending",
+            href: "/order_management/pending",
             count: 2,
             color: "bg-orange-100 text-orange-600",
           },
           {
             name: "Accepted",
-            href: "/orders/accepted",
+            href: "/order_management/accepted",
             count: 2,
             color: "bg-green-100 text-green-600",
           },
           {
             name: "Processing",
-            href: "/orders/processing",
+            href: "/order_management/processing",
             count: 2,
             color: "bg-blue-100 text-blue-600",
           },
           {
             name: "In transit",
-            href: "/orders/transit",
+            href: "/order_management/in-transit",
             count: 2,
             color: "bg-orange-100 text-orange-600",
           },
           {
             name: "Delivered",
-            href: "/orders/delivered",
+            href: "/order_management/delivered",
             count: 2,
             color: "bg-green-100 text-green-600",
           },
           {
             name: "Cancelled",
-            href: "/orders/cancelled",
+            href: "/order_management/cancelled",
             count: 2,
             color: "bg-red-100 text-red-600",
           },
