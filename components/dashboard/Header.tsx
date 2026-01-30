@@ -43,6 +43,23 @@ export default function Header() {
       };
     }
 
+    // For restaurant_management pages
+    if (segments[0] === "restaurant_management") {
+      const subpage = segments[1] || "overview";
+      const subtitleMap: Record<string, string> = {
+        "cuisine": "Cuisine",
+        "add-new-restaurant": "Add New Restaurant",
+        "request": "Request",
+        "restaurant-list": "Restaurant List",
+        "zone-setup": "Zone Setup",
+      };
+      return {
+        title: "Restaurant Management",
+        subtitle: subtitleMap[subpage] || subpage.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+        showBadge: false,
+      };
+    }
+
     // For delivery management pages
     if (segments[0] === "delivery_management") {
       const subpage = segments[1] || "overview";

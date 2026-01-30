@@ -76,7 +76,7 @@ export default function DashboardPage() {
                       >
                         {link}
                       </button>
-                    )
+                    ),
                   )}
                 </div>
               </div>
@@ -243,26 +243,37 @@ export default function DashboardPage() {
   );
 }
 
-function ScheduleCard({ title, time, btnText, isMeet }) {
+type ScheduleCardProps = {
+  title: string;
+  time: string;
+  btnText?: string;
+  isMeet?: boolean;
+};
+
+function ScheduleCard({ title, time, btnText, isMeet }: ScheduleCardProps) {
   return (
     <div className="bg-white p-4 rounded-2xl border border-gray-100 space-y-3">
       <h4 className="text-[13px] font-bold text-[#00302E]">{title}</h4>
+
       <p className="text-[10px] text-gray-400 font-medium">
         10 Nov, 2025 • {time}
       </p>
+
       {btnText && (
         <button className="w-full py-2 bg-[#F16622] text-white text-[11px] font-bold rounded-xl">
           {btnText}
         </button>
       )}
+
       {isMeet && (
         <div className="flex items-center justify-between border-t pt-3 mt-3">
           <div className="flex items-center gap-1 text-[10px] text-blue-600 font-bold">
             <div className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center">
               G
-            </div>{" "}
+            </div>
             Google Meet
           </div>
+
           <div className="flex -space-x-2">
             {[1, 2, 3].map((i) => (
               <div
@@ -365,7 +376,12 @@ function RidersActivityCard({ onTime = 70, late = 20, absent = 10 }) {
   );
 }
 
-function LegendItem({ color, label }) {
+type LegendItemProps = {
+  color: string;
+  label: string;
+};
+
+function LegendItem({ color, label }: LegendItemProps) {
   return (
     <div className="flex items-center gap-1.5">
       <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
@@ -374,7 +390,28 @@ function LegendItem({ color, label }) {
   );
 }
 
-function TableRow({ type, name, detail, date, status }) {
+type TableRowProps = {
+  type: string;
+  name: string;
+  detail: string;
+  date: string;
+  status: Status;
+};
+type Status = "Approved" | "Pending" | "Rejected";
+
+const statusStyles: Record<Status, string> = {
+  Approved: "bg-green-50 text-green-600 border-green-100",
+  Pending: "bg-orange-50 text-orange-600 border-orange-100",
+  Rejected: "bg-red-50 text-red-600 border-red-100",
+};
+
+const dotColors: Record<Status, string> = {
+  Approved: "bg-green-600",
+  Pending: "bg-orange-600",
+  Rejected: "bg-red-600",
+};
+
+function TableRow({ type, name, detail, date, status }: TableRowProps) {
   const statusStyles = {
     Approved: "bg-green-50 text-green-600 border-green-100",
     Pending: "bg-orange-50 text-orange-600 border-orange-100",
@@ -429,7 +466,7 @@ function KeyMetrics() {
   ];
 
   const MAX_VALUE = 5000;
-  const getHeight = (value) => `${(value / MAX_VALUE) * 100}%`;
+  const getHeight = (value: number) => `${(value / MAX_VALUE) * 100}%`;
 
   return (
     <div className="col-span-12 lg:col-span-6 bg-white rounded-[24px] border border-gray-100 shadow-sm overflow-hidden min-h-[450px] h-full flex flex-col">

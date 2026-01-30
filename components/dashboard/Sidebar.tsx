@@ -144,9 +144,9 @@ const sidebarData = [
         subChildren: [
           { name: "Add new restaurant", href: "/restaurant/add" },
           { name: "Restaurant list", href: "/restaurant/list" },
-          { name: "Request", href: "/restaurant/list" },
-          { name: "Bulk import", href: "/restaurant/list" },
-          { name: "Bulk export", href: "/restaurant/list" },
+          { name: "Request", href: "/restaurant/request" },
+          { name: "Bulk import", href: "/restaurant/bulk-import" },
+          { name: "Bulk export", href: "/restaurant/bulk-export" },
         ],
       },
     ],
@@ -345,7 +345,7 @@ export default function Sidebar() {
 
   const toggleMenu = (name: string) => {
     setOpenMenus((prev) =>
-      prev.includes(name) ? prev.filter((i) => i !== name) : [...prev, name]
+      prev.includes(name) ? prev.filter((i) => i !== name) : [...prev, name],
     );
   };
 
@@ -383,7 +383,17 @@ export default function Sidebar() {
   );
 }
 
-function isDescendantActive(item, pathname) {
+type NavMenuItem = {
+  name: string;
+  href?: string;
+  icon?: string | React.ComponentType<{ className?: string }>;
+  count?: number;
+  color?: string;
+  children?: NavMenuItem[];
+  subChildren?: NavMenuItem[];
+};
+
+function isDescendantActive(item: NavMenuItem, pathname: string): boolean {
   if (item.href && pathname === item.href) return true;
 
   const children = item.children || item.subChildren;
@@ -392,7 +402,21 @@ function isDescendantActive(item, pathname) {
   return children.some((child) => isDescendantActive(child, pathname));
 }
 
-function NavItem({ item, pathname, openMenus, toggleMenu, level }) {
+type NavItemProps = {
+  item: NavMenuItem;
+  pathname: string;
+  openMenus: string[];
+  toggleMenu: (name: string) => void;
+  level: number;
+};
+
+function NavItem({
+  item,
+  pathname,
+  openMenus,
+  toggleMenu,
+  level,
+}: NavItemProps) {
   const hasChildren = item.children || item.subChildren;
   const isOpen = openMenus.includes(item.name);
   const isActive = isDescendantActive(item, pathname);
@@ -400,79 +424,143 @@ function NavItem({ item, pathname, openMenus, toggleMenu, level }) {
   // Text and weight become black/bold if the menu is open or the route is active
   const isHighlighted = isActive || isOpen;
 
-  const ContentWrapper = item.href ? Link : "div";
-
   return (
     <div className="w-full">
-      <ContentWrapper
-        {...(item.href ? { href: item.href } : {})}
-        onClick={() => hasChildren && toggleMenu(item.name)}
-        className={`
-          flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-all
-          ${
-            isHighlighted
-              ? "text-black font-bold"
-              : "text-gray-500 hover:bg-gray-100"
-          }
-        `}
-      >
-        <div className="flex items-center gap-3">
-          {item.icon && (
-            <div className="flex items-center justify-center w-5 h-5">
-              {typeof item.icon === "string" ? (
-                <img
-                  src={item.icon}
-                  alt=""
-                  width={20}
-                  height={20}
-                  className="shrink-0" // Removed brightness-0 and grayscale filters
-                />
-              ) : (
-                <item.icon
-                  className={`w-5 h-5 shrink-0 ${
-                    isHighlighted ? "text-[#F16622]" : "text-gray-400"
-                  }`}
-                />
-              )}
-            </div>
-          )}
-          <span
-            className={`text-[15px] leading-tight ${level > 0 ? "ml-2" : ""}`}
-          >
-            {item.name}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {item.count !== undefined && (
+      {item.href ? (
+        <Link
+          href={item.href}
+          onClick={() => hasChildren && toggleMenu(item.name)}
+          className={`
+            flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-all
+            ${
+              isHighlighted
+                ? "text-black font-bold"
+                : "text-gray-500 hover:bg-gray-100"
+            }
+          `}
+        >
+          <div className="flex items-center gap-3">
+            {item.icon && (
+              <div className="flex items-center justify-center w-5 h-5">
+                {typeof item.icon === "string" ? (
+                  <img
+                    src={item.icon}
+                    alt=""
+                    width={20}
+                    height={20}
+                    className="shrink-0" // Removed brightness-0 and grayscale filters
+                  />
+                ) : (
+                  <item.icon
+                    className={`w-5 h-5 shrink-0 ${
+                      isHighlighted ? "text-[#F16622]" : "text-gray-400"
+                    }`}
+                  />
+                )}
+              </div>
+            )}
             <span
-              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                item.color || "bg-blue-100 text-blue-600"
-              }`}
+              className={`text-[15px] leading-tight ${level > 0 ? "ml-2" : ""}`}
             >
-              {item.count}
+              {item.name}
             </span>
-          )}
-          {hasChildren && (
-            <div className="transition-transform duration-200">
-              {isOpen ? (
-                <ChevronUp
-                  className={`w-4 h-4 ${
-                    isHighlighted ? "text-black" : "text-gray-400"
-                  }`}
-                />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              )}
-            </div>
-          )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {item.count !== undefined && (
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  item.color || "bg-blue-100 text-blue-600"
+                }`}
+              >
+                {item.count}
+              </span>
+            )}
+            {hasChildren && (
+              <div className="transition-transform duration-200">
+                {isOpen ? (
+                  <ChevronUp
+                    className={`w-4 h-4 ${
+                      isHighlighted ? "text-black" : "text-gray-400"
+                    }`}
+                  />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                )}
+              </div>
+            )}
+          </div>
+        </Link>
+      ) : (
+        <div
+          onClick={() => hasChildren && toggleMenu(item.name)}
+          className={`
+            flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-all
+            ${
+              isHighlighted
+                ? "text-black font-bold"
+                : "text-gray-500 hover:bg-gray-100"
+            }
+          `}
+        >
+          <div className="flex items-center gap-3">
+            {item.icon && (
+              <div className="flex items-center justify-center w-5 h-5">
+                {typeof item.icon === "string" ? (
+                  <img
+                    src={item.icon}
+                    alt=""
+                    width={20}
+                    height={20}
+                    className="shrink-0"
+                  />
+                ) : (
+                  <item.icon
+                    className={`w-5 h-5 shrink-0 ${
+                      isHighlighted ? "text-[#F16622]" : "text-gray-400"
+                    }`}
+                  />
+                )}
+              </div>
+            )}
+            <span
+              className={`text-[15px] leading-tight ${level > 0 ? "ml-2" : ""}`}
+            >
+              {item.name}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {item.count !== undefined && (
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  item.color || "bg-blue-100 text-blue-600"
+                }`}
+              >
+                {item.count}
+              </span>
+            )}
+            {hasChildren && (
+              <div className="transition-transform duration-200">
+                {isOpen ? (
+                  <ChevronUp
+                    className={`w-4 h-4 ${
+                      isHighlighted ? "text-black" : "text-gray-400"
+                    }`}
+                  />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </ContentWrapper>
+      )}
 
       {/* Nested Children */}
       {hasChildren && isOpen && (
         <div className="mt-1 space-y-1 ml-6">
-          {(item.children || item.subChildren).map((child) => (
+          {(item.children || item.subChildren)?.map((child) => (
             <NavItem
               key={child.name}
               item={child}
