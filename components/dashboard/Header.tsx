@@ -15,6 +15,12 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const [loading, setLoading] = useState(true);
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
 
+  const displayName =
+    user?.name ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+    user?.email?.split("@")[0] ||
+    "User";
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -28,6 +34,20 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     };
 
     fetchUser();
+
+    const onAuthUpdated = () => {
+      fetchUser();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("auth:updated", onAuthUpdated);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("auth:updated", onAuthUpdated);
+      }
+    };
   }, []);
 
   // Fetch order counts for dynamic badge display
@@ -303,7 +323,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     {/* Name + email (desktop only) */}
     <div className="hidden md:flex flex-col leading-tight min-w-0">
       <span className="text-sm font-bold text-[#00302E] truncate max-w-[160px]">
-        {loading ? "Loading..." : user?.name || "User"}
+        {loading ? "Loading..." : displayName}
       </span>
       <span className="text-[11px] text-gray-500 font-medium truncate max-w-[160px]">
         {loading ? "..." : user?.email || "email@example.com"}

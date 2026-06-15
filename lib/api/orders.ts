@@ -214,18 +214,18 @@ export async function fetchOrders(params?: FetchOrdersParams): Promise<{ orders:
   if (params?.endDate) queryParams.append("endDate", params.endDate);
 
   const data = await apiCall<OrdersResponse>(
-    `/admin/orders?${queryParams.toString()}`,
+    `/orders?${queryParams.toString()}`,
     { method: "GET" }
   );
 
-  const orders = data.data ?? [];
+    const orders = data.data?.data ?? [];
   orders.forEach((order) => {
     ordersCache.set(order.id, order);
   });
 
   return {
     orders: orders.map(mapOrderToRow),
-    meta: data.meta ?? { total: 0, page, limit, totalPages: 0 },
+      meta: data.data?.meta ?? { total: 0, page, limit, totalPages: 0 },
   };
 }
 

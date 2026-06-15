@@ -23,26 +23,36 @@ export interface Zone {
 }
 
 export interface ZonesResponse {
-  status: string;
-  message: string;
-  data: Zone[];
-  meta: {
-    totalItems: number;
-    itemCount: number;
-    itemsPerPage: number;
-    totalPages: number;
-    currentPage: number;
-  };
+  status?: string;
+  message?: string;
+  data?:
+    | Zone[]
+    | {
+        status?: string;
+        message?: string;
+        data?: Zone[];
+        meta?: {
+          totalItems: number;
+          itemCount: number;
+          itemsPerPage: number;
+          totalPages: number;
+          currentPage: number;
+        };
+      };
 }
 
 export async function fetchZones(): Promise<Zone[]> {
   try {
-    const data = await apiCall<ZonesResponse>("/zone/get-zones", {
+    const data = await apiCall<ZonesResponse>("/zones?page=1&limit=20", {
       method: "GET",
     });
+
+    const zones = Array.isArray(data.data)
+      ? data.data
+      : data.data?.data ?? [];
     
     // Convert GeoJSON to polygon array if needed
-    return (data.data || []).map(zone => {
+    return zones.map(zone => {
       if (!zone.polygon && zone.polygonGeoJson?.coordinates?.[0]) {
         // Convert GeoJSON coordinates to LatLng array
         zone.polygon = zone.polygonGeoJson.coordinates[0].map(([lng, lat]) => ({
@@ -75,14 +85,24 @@ export interface CreateZonePayload {
 
 export async function createZone(payload: CreateZonePayload): Promise<Zone> {
   try {
-    const response = await apiCall<any>("/zone/create-zone", {
+    const response = await apiCall<any>("/zones", {
       method: "POST",
       body: JSON.stringify({
         ...payload,
         isActive: true,
       }),
     });
-    return response.data?.[0] || response.data;
+
+    const zone =
+      response?.data?.data?.[0] ||
+      response?.data?.[0] ||
+      response?.data;
+
+    if (!zone) {
+      throw new Error("Create zone response missing zone data");
+    }
+
+    return zone;
   } catch (error) {
     console.error("Failed to create zone:", error);
     throw error;

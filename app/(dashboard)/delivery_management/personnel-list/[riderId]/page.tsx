@@ -93,6 +93,7 @@ export default function PersonnelDetailsPage() {
   const [rider, setRider] = useState<Rider | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [actioning, setActioning] = useState<"APPROVE" | "REJECT" | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!riderId) {
@@ -108,13 +109,14 @@ export default function PersonnelDetailsPage() {
   async function handleAction(action: "APPROVE" | "REJECT") {
     if (!riderId || actioning) return;
     setActioning(action);
+    setError(null);
     try {
       await approveOrRejectRider(riderId, action);
       router.push("/delivery_management/personnel-list");
     } catch (e: unknown) {
       const message =
         e instanceof Error ? e.message : "Action failed. Please try again.";
-      alert(message);
+      setError(message);
     } finally {
       setActioning(null);
     }
@@ -133,6 +135,12 @@ export default function PersonnelDetailsPage() {
 
   return (
     <div className="p-6 space-y-6 bg-[#F8F9FA] min-h-screen">
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button

@@ -9,6 +9,8 @@ export interface LoginPayload {
 export interface User {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   role: string;
   permissions: string[];
@@ -65,6 +67,9 @@ export async function loginAdmin(payload: LoginPayload): Promise<AuthResponse> {
     if (data.data?.accessToken && data.data?.refreshToken) {
       const { setAuthCookies } = await import("@/lib/actions/auth");
       await setAuthCookies(data.data.accessToken, data.data.refreshToken);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("auth:updated"));
+      }
     }
 
     return data;
@@ -132,10 +137,20 @@ export async function refreshAccessToken(): Promise<string> {
       throw new Error(data.message || "Token refresh failed");
     }
 
+    if (!data.data?.accessToken) {
+      throw new Error("Refresh response missing access token");
+    }
+
     // Update tokens in cookies
-    if (data.data?.accessToken && data.data?.refreshToken) {
+    if (data.data?.accessToken) {
       const { setAuthCookies } = await import("@/lib/actions/auth");
-      await setAuthCookies(data.data.accessToken, data.data.refreshToken);
+      await setAuthCookies(
+        data.data.accessToken,
+        data.data?.refreshToken || refreshToken
+      );
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("auth:updated"));
+      }
     }
 
     return data.data.accessToken;

@@ -102,7 +102,7 @@ export default function RestaurantDetailsPage() {
       await approveOrRejectVendor(vendorId, action);
       router.push("/restaurant_management/request");
     } catch (e: any) {
-      alert(e.message ?? "Action failed. Please try again.");
+      console.error(e.message ?? "Action failed. Please try again.");
     } finally {
       setActioning(null);
     }

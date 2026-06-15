@@ -47,11 +47,21 @@ export async function apiCall<T>(
         ...fetchOptions,
         headers,
       });
+
+      // If still unauthorized after refresh, force logout.
+      if (response.status === 401) {
+        const { clearAuthCookies } = await import("@/lib/actions/auth");
+        await clearAuthCookies();
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth/admin?reason=session-expired";
+        }
+        throw new Error("Session expired. Please log in again.");
+      }
     } catch (error) {
       console.error("Token refresh failed:", error);
       // Redirect to login on auth failure
       if (typeof window !== "undefined") {
-        window.location.href = "/auth/admin";
+        window.location.href = "/auth/admin?reason=session-expired";
       }
       throw error;
     }

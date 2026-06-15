@@ -1,6 +1,6 @@
 import { apiCall } from "./client";
 
-const CACHE_TTL_MS = 10 * 60 * 1000;
+const CACHE_TTL_MS = 2 * 60 * 1000;
 const STORAGE_PREFIX = "dashboard_cache_v1";
 
 type CacheEntry<T> = { data: T; at: number };

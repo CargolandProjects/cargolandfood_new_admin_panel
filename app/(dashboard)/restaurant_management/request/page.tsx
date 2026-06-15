@@ -77,7 +77,7 @@ export default function RestaurantRequestPage() {
       if (action === "REJECT") setDeclinedData([]);
       if (action === "APPROVE") setApprovedData([]);
     } catch (e: any) {
-      alert(e.message ?? "Action failed. Please try again.");
+      console.error(e.message ?? "Action failed. Please try again.");
     } finally {
       setActioningId(null);
     }

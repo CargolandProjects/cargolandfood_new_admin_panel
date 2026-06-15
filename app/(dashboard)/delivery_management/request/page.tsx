@@ -51,7 +51,7 @@ export default function RequestPage() {
     } catch (e: unknown) {
       const message =
         e instanceof Error ? e.message : "Action failed. Please try again.";
-      alert(message);
+      setError(message);
     } finally {
       setActioningId(null);
     }

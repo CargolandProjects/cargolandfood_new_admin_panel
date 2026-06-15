@@ -51,10 +51,16 @@ export interface Vendor {
 }
 
 /** Full API response envelope */
+interface VendorsPayload {
+  status?: string;
+  message?: string;
+  data?: Vendor[];
+}
+
 export interface VendorsResponse {
-  status: string;
-  message: string;
-  data: Vendor[];
+  status?: string;
+  message?: string;
+  data: Vendor[] | VendorsPayload;
 }
 
 /** Shape the DataTable expects */
@@ -98,16 +104,22 @@ function mapVendorToRow(vendor: Vendor): RestaurantRow {
   };
 }
 
+function getVendorsArray(response: VendorsResponse): Vendor[] {
+  if (Array.isArray(response.data)) return response.data;
+  if (response.data && Array.isArray(response.data.data)) return response.data.data;
+  return [];
+}
+
 // ── API calls ────────────────────────────────────────────────────────────────
 
 /**
  * Fetch all active/live vendors (restaurant list page).
  */
 export async function fetchVendors(): Promise<RestaurantRow[]> {
-  const data = await apiCall<VendorsResponse>("/admin/vendors", {
+  const data = await apiCall<VendorsResponse>("/vendors", {
     method: "GET",
   });
-  const vendors = data.data ?? [];
+  const vendors = getVendorsArray(data);
   vendors.forEach((vendor) => {
     vendorsCache.set(vendor.id, vendor);
   });
@@ -118,10 +130,10 @@ export async function fetchVendors(): Promise<RestaurantRow[]> {
  * Fetch vendors whose join request is still pending (not yet approved/declined).
  */
 export async function fetchPendingVendors(): Promise<RestaurantRow[]> {
-  const data = await apiCall<VendorsResponse>("/admin/vendors/pending", {
+  const data = await apiCall<VendorsResponse>("/vendors/pending", {
     method: "GET",
   });
-  const vendors = data.data ?? [];
+  const vendors = getVendorsArray(data);
   vendors.forEach((vendor) => {
     vendorsCache.set(vendor.id, vendor);
   });
@@ -132,10 +144,10 @@ export async function fetchPendingVendors(): Promise<RestaurantRow[]> {
  * Fetch vendors whose join request was declined.
  */
 export async function fetchDeclinedVendors(): Promise<RestaurantRow[]> {
-  const data = await apiCall<VendorsResponse>("/admin/vendors/declined", {
+  const data = await apiCall<VendorsResponse>("/vendors/declined", {
     method: "GET",
   });
-  const vendors = data.data ?? [];
+  const vendors = getVendorsArray(data);
   vendors.forEach((vendor) => {
     vendorsCache.set(vendor.id, vendor);
   });
@@ -146,10 +158,10 @@ export async function fetchDeclinedVendors(): Promise<RestaurantRow[]> {
  * Fetch vendors whose join request was approved.
  */
 export async function fetchApprovedVendors(): Promise<RestaurantRow[]> {
-  const data = await apiCall<VendorsResponse>("/admin/vendors/approved", {
+  const data = await apiCall<VendorsResponse>("/vendors/approved", {
     method: "GET",
   });
-  const vendors = data.data ?? [];
+  const vendors = getVendorsArray(data);
   vendors.forEach((vendor) => {
     vendorsCache.set(vendor.id, vendor);
   });
@@ -178,22 +190,32 @@ export interface CreateVendorPayload {
 }
 
 export async function createVendor(payload: CreateVendorPayload): Promise<void> {
-  await apiCall("/admin/vendors/create", {
+  await apiCall("/vendors/create", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
 /**
- * Toggle a vendor's active status (PATCH /admin/vendors/:id/toggle-status).
+ * Toggle a vendor's active status (PATCH /vendors/:id/toggle-status).
  * Returns the new isActive value from the API response.
  */
 export async function toggleVendorStatus(vendorId: string): Promise<boolean> {
-  const data = await apiCall<{ status: string; data: { isActive: boolean } }>(
-    `/admin/vendors/${vendorId}/toggle-status`,
+  const data = await apiCall<any>(
+    `/vendors/${vendorId}/toggle-status`,
     { method: "PATCH" }
   );
-  return data.data.isActive;
+
+  const isActive =
+    data?.data?.isActive ??
+    data?.data?.data?.isActive ??
+    data?.data?.vendor?.isActive;
+
+  if (typeof isActive !== "boolean") {
+    throw new Error("Toggle response missing isActive");
+  }
+
+  return isActive;
 }
 
 /**
@@ -207,17 +229,18 @@ export async function approveOrRejectVendor(
   action: "APPROVE" | "REJECT",
   rejectionReason = ""
 ): Promise<void> {
-  // Get the logged-in admin's ID from their profile
-  const { getProfile } = await import("@/lib/api/auth");
-  const profile = await getProfile();
+  if (action === "APPROVE") {
+    await apiCall(`/vendors/${vendorId}/approve`, {
+      method: "POST",
+      body: "",
+    });
+    return;
+  }
 
-  await apiCall("/admin/vendors/approve-or-reject", {
+  await apiCall(`/vendors/${vendorId}/reject`, {
     method: "POST",
-    body: JSON.stringify({
-      vendorId,
-      approveOrReject: action,
-      adminId: profile.id,
-      rejectionReason,
-    }),
+    body: rejectionReason
+      ? JSON.stringify({ rejectionReason })
+      : JSON.stringify({}),
   });
 }

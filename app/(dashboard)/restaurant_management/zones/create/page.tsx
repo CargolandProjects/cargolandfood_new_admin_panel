@@ -14,7 +14,8 @@ import {
   GoogleMap, 
   useJsApiLoader, 
   Marker,
-  Polygon
+  Polygon,
+  Polyline
 } from "@react-google-maps/api";
 import { useRouter } from "next/navigation";
 import { createZone, type CreateZonePayload } from "@/lib/api/zones";
@@ -47,7 +48,9 @@ export default function CreateZone() {
   const [polygonPath, setPolygonPath] = useState<{ lat: number; lng: number }[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mapRenderKey, setMapRenderKey] = useState(0);
   const polygonRef = useRef<google.maps.Polygon | null>(null);
+  const polygonListenersRef = useRef<google.maps.MapsEventListener[]>([]);
   const mapRef = useRef<google.maps.Map | null>(null);
 
   const maps = typeof window !== "undefined" ? window.google?.maps : undefined;
@@ -107,6 +110,8 @@ export default function CreateZone() {
 
   // 4. Keep polygon coordinates in sync while editing
   const onPolygonLoad = useCallback((polygon: google.maps.Polygon) => {
+    polygonListenersRef.current.forEach((listener) => listener.remove());
+    polygonListenersRef.current = [];
     polygonRef.current = polygon;
 
     const updatePath = () => {
@@ -123,9 +128,15 @@ export default function CreateZone() {
     // Listen for edits/drags to update coordinates in real-time
     const addListener = maps?.event?.addListener;
     if (addListener) {
-      addListener(polygon.getPath(), "set_at", updatePath);
-      addListener(polygon.getPath(), "insert_at", updatePath);
-      addListener(polygon.getPath(), "remove_at", updatePath);
+      polygonListenersRef.current.push(
+        addListener(polygon.getPath(), "set_at", updatePath)
+      );
+      polygonListenersRef.current.push(
+        addListener(polygon.getPath(), "insert_at", updatePath)
+      );
+      polygonListenersRef.current.push(
+        addListener(polygon.getPath(), "remove_at", updatePath)
+      );
     }
   }, [maps]);
 
@@ -164,12 +175,28 @@ export default function CreateZone() {
 
   // 5. Reset Logic
   const handleReset = () => {
+    polygonListenersRef.current.forEach((listener) => listener.remove());
+    polygonListenersRef.current = [];
+
     if (polygonRef.current) {
       polygonRef.current.setMap(null);
       polygonRef.current = null;
     }
+
+    // Clear all map overlays/state so reset leaves a clean map.
     setIsDrawing(false);
     setPolygonPath(null);
+    setSearchedPoint(null);
+    setSearchQuery("");
+    setSearchError(null);
+
+    if (mapRef.current) {
+      mapRef.current.panTo(defaultCenter);
+      mapRef.current.setZoom(13);
+    }
+
+    // Force a full map remount to clear any stale overlay artifacts.
+    setMapRenderKey((prev) => prev + 1);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -206,7 +233,6 @@ export default function CreateZone() {
       };
 
       await createZone(payload);
-      alert("Zone created successfully!");
       router.push("/restaurant_management/zones");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create zone");
@@ -392,6 +418,7 @@ export default function CreateZone() {
           <div className="relative w-full h-[500px] bg-gray-100 rounded-xl overflow-hidden border border-gray-200 mb-8 shadow-inner">
             {isLoaded ? (
               <GoogleMap
+                key={mapRenderKey}
                 mapContainerStyle={mapContainerStyle}
                 center={searchedPoint || defaultCenter}
                 zoom={searchedPoint ? 14 : 13}
@@ -403,6 +430,19 @@ export default function CreateZone() {
                   streetViewControl: false,
                 }}
               >
+                {polygonPath && polygonPath.length > 1 && (
+                  <Polyline
+                    path={polygonPath}
+                    options={{
+                      strokeColor: polygonColor.stroke,
+                      strokeOpacity: 0.9,
+                      strokeWeight: 2,
+                      clickable: false,
+                      zIndex: 2,
+                    }}
+                  />
+                )}
+
                 {polygonPath && polygonPath.length > 0 && (
                   <Polygon
                     path={polygonPath}
@@ -418,6 +458,30 @@ export default function CreateZone() {
                     }}
                   />
                 )}
+
+                {polygonPath?.map((point, index) => (
+                  <Marker
+                    key={`draw-point-${index}-${point.lat}-${point.lng}`}
+                    position={point}
+                    label={{
+                      text: String(index + 1),
+                      color: "#ffffff",
+                      fontSize: "10px",
+                      fontWeight: "700",
+                    }}
+                    icon={{
+                      path: window.google.maps.SymbolPath.CIRCLE,
+                      scale: 9,
+                      fillColor: index === 0 ? "#f97316" : "#111827",
+                      fillOpacity: 1,
+                      strokeColor: "#ffffff",
+                      strokeWeight: 2,
+                    }}
+                    clickable={false}
+                    zIndex={3}
+                  />
+                ))}
+
                 {searchedPoint && (
                   <Marker
                     position={searchedPoint}

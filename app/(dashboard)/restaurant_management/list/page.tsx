@@ -118,7 +118,10 @@ export default function RestaurantListPage() {
         return (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => toggleStatus(row.id)}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleStatus(row.id);
+              }}
               disabled={isToggling}
               className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                 isActive ? "bg-green-500" : "bg-gray-300"

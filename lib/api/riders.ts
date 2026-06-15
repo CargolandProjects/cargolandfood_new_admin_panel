@@ -34,9 +34,15 @@ export interface Rider {
 }
 
 export interface RidersResponse {
-  status: string;
-  message: string;
-  data: Rider[];
+  status?: string;
+  message?: string;
+  data?:
+    | Rider[]
+    | {
+        status?: string;
+        message?: string;
+        data?: Rider[];
+      };
 }
 
 export interface RiderRow {
@@ -84,11 +90,11 @@ function mapRiderToRow(rider: Rider): RiderRow {
 // ── API calls ────────────────────────────────────────────────────────────────
 
 export async function fetchRiders(): Promise<RiderRow[]> {
-  const data = await apiCall<RidersResponse>("/admin/riders", {
+  const data = await apiCall<RidersResponse>("/riders?page=1&limit=20", {
     method: "GET",
   });
 
-  const riders = data.data ?? [];
+  const riders = Array.isArray(data.data) ? data.data : data.data?.data ?? [];
   riders.forEach((rider) => {
     ridersCache.set(rider.id, rider);
   });
@@ -131,16 +137,18 @@ export async function approveOrRejectRider(
   action: "APPROVE" | "REJECT",
   rejectionReason = ""
 ): Promise<void> {
-  const { getProfile } = await import("@/lib/api/auth");
-  const profile = await getProfile();
+  if (action === "APPROVE") {
+    await apiCall(`/riders/${riderId}/approve`, {
+      method: "POST",
+      body: "",
+    });
+    return;
+  }
 
-  await apiCall("/admin/riders/approve-or-reject", {
+  await apiCall(`/riders/${riderId}/reject`, {
     method: "POST",
-    body: JSON.stringify({
-      riderId,
-      approveOrReject: action,
-      adminId: profile.id,
-      rejectionReason,
-    }),
+    body: rejectionReason
+      ? JSON.stringify({ rejectionReason })
+      : JSON.stringify({}),
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
@@ -14,7 +14,25 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  const [showSessionToast, setShowSessionToast] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get("reason");
+    if (reason === "session-expired") {
+      setShowSessionToast(true);
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete("reason");
+      window.history.replaceState({}, "", url.toString());
+
+      const timer = window.setTimeout(() => {
+        setShowSessionToast(false);
+      }, 5000);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,6 +205,12 @@ export default function LoginPage() {
           </div>
         </section>
       </div>
+
+      {showSessionToast && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 shadow-lg">
+          Session expired. Please log in again.
+        </div>
+      )}
 
       {/* Error Modal */}
       <Modal
