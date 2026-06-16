@@ -93,10 +93,17 @@ export interface OrdersMeta {
   totalPages: number;
 }
 
+interface OrdersPayload {
+  status?: string;
+  message?: string;
+  data?: Order[];
+  meta?: OrdersMeta;
+}
+
 export interface OrdersResponse {
-  status: string;
-  message: string;
-  data: Order[];
+  status?: string;
+  message?: string;
+  data?: Order[] | OrdersPayload;
   meta?: OrdersMeta;
 }
 
@@ -218,14 +225,19 @@ export async function fetchOrders(params?: FetchOrdersParams): Promise<{ orders:
     { method: "GET" }
   );
 
-    const orders = data.data?.data ?? [];
+  const orders = Array.isArray(data.data) ? data.data : data.data?.data ?? [];
   orders.forEach((order) => {
     ordersCache.set(order.id, order);
   });
 
   return {
     orders: orders.map(mapOrderToRow),
-      meta: data.data?.meta ?? { total: 0, page, limit, totalPages: 0 },
+    meta: (Array.isArray(data.data) ? data.meta : data.data?.meta) ?? {
+      total: 0,
+      page,
+      limit,
+      totalPages: 0,
+    },
   };
 }
 
