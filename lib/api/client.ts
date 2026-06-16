@@ -14,7 +14,8 @@ export async function apiCall<T>(
   const { skipAuth = false, authBase = false, ...fetchOptions } = options;
 
   const baseUrl = authBase ? getAuthApiBaseUrl() : getApiBaseUrl();
-  const url = `${baseUrl}${endpoint}`;
+  const isAbsoluteUrl = /^https?:\/\//i.test(endpoint);
+  const url = isAbsoluteUrl ? endpoint : `${baseUrl}${endpoint}`;
   const headers = new Headers(fetchOptions.headers || {});
 
   // Add auth header if not skipped

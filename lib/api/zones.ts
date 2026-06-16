@@ -1,5 +1,7 @@
 import { apiCall } from "./client";
 
+const ZONES_PROD_BASE = "https://prod.cargolandfood.com/api/v1";
+
 
 export interface Zone {
   id: string;
@@ -43,7 +45,7 @@ export interface ZonesResponse {
 
 export async function fetchZones(): Promise<Zone[]> {
   try {
-    const data = await apiCall<ZonesResponse>("/zones?page=1&limit=20", {
+    const data = await apiCall<ZonesResponse>(`${ZONES_PROD_BASE}/zone/get-zones`, {
       method: "GET",
     });
 
@@ -85,7 +87,7 @@ export interface CreateZonePayload {
 
 export async function createZone(payload: CreateZonePayload): Promise<Zone> {
   try {
-    const response = await apiCall<any>("/zones", {
+    const response = await apiCall<any>(`${ZONES_PROD_BASE}/zones`, {
       method: "POST",
       body: JSON.stringify({
         ...payload,
