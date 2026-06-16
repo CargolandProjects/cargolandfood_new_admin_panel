@@ -87,7 +87,7 @@ export interface CreateZonePayload {
 
 export async function createZone(payload: CreateZonePayload): Promise<Zone> {
   try {
-    const response = await apiCall<any>(`${ZONES_PROD_BASE}/zones`, {
+    const response = await apiCall<any>(`${ZONES_PROD_BASE}/zone/create-zone`, {
       method: "POST",
       body: JSON.stringify({
         ...payload,
