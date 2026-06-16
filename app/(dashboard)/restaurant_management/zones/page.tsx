@@ -10,9 +10,11 @@ export default function ZonesPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [zones, setZones] = useState<Zone[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const loadZones = async () => {
@@ -34,10 +36,10 @@ export default function ZonesPage() {
 
   // Calculate stats from zones data
   const stats = [
-    { label: "Active Zones", count: zones.filter(z => z.isActive).length, change: "+2%", color: "text-gray-900" },
-    { label: "Promo Zones", count: zones.filter(z => z.zoneType === "PROMO").length, change: "+2", color: "text-gray-900" },
-    { label: "Zones With High Priority", count: zones.filter(z => z.priority >= 3).length, change: "-4", color: "text-gray-900" },
-    { label: "Zones with Low Priority", count: zones.filter(z => z.priority <= 2).length, change: "+4", color: "text-gray-900" },
+    { label: "Total Zones", count: zones.length, color: "text-gray-900" },
+    { label: "Active Zones", count: zones.filter(z => z.isActive).length, color: "text-gray-900" },
+    { label: "Zones With High Priority", count: zones.filter(z => z.priority >= 3).length, color: "text-gray-900" },
+    { label: "Zones with Low Priority", count: zones.filter(z => z.priority <= 2).length, color: "text-gray-900" },
   ];
 
   const getTypeColor = (type: string) => {
@@ -63,6 +65,48 @@ export default function ZonesPage() {
     };
     return labels[priority] || "Medium";
   };
+
+  const filteredZones = zones.filter((zone) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+
+    return [
+      zone.id,
+      zone.zoneName,
+      zone.zoneType,
+      String(zone.restaurantCount ?? 0),
+      String(zone.personnelCount ?? 0),
+      zone.isActive ? "active" : "inactive",
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(term);
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredZones.length / itemsPerPage));
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, zones.length]);
+
+  const currentData = filteredZones.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  const pageItems: Array<number | string> =
+    totalPages <= 5
+      ? Array.from({ length: totalPages }, (_, i) => i + 1)
+      : currentPage <= 3
+      ? [1, 2, 3, "...", totalPages]
+      : currentPage >= totalPages - 2
+      ? [1, "...", totalPages - 2, totalPages - 1, totalPages]
+      : [1, "...", currentPage, "...", totalPages];
 
   if (loading) {
     return (
@@ -101,14 +145,11 @@ export default function ZonesPage() {
           {stats.map((stat, idx) => (
             <div key={idx} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
               <p className="text-[13px] font-medium text-gray-500 mb-2">{stat.label}</p>
-              <div className="flex items-end justify-between">
+              <div className="flex items-end">
                 <div>
                   <p className="text-3xl font-bold text-gray-900">{stat.count}</p>
                   <p className="text-[11px] text-gray-400 mt-1">Zones</p>
                 </div>
-                <p className={`text-sm font-semibold ${stat.change.startsWith("+") ? "text-green-600" : "text-red-600"}`}>
-                  {stat.change}
-                </p>
               </div>
             </div>
           ))}
@@ -119,7 +160,7 @@ export default function ZonesPage() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <h2 className="text-[13px] font-bold text-gray-900 uppercase tracking-wider">Zone list</h2>
-              <span className="bg-orange-100 text-orange-700 text-[11px] font-bold px-2 py-1 rounded">{zones.length}</span>
+              <span className="bg-orange-100 text-orange-700 text-[11px] font-bold px-2 py-1 rounded">{filteredZones.length}</span>
             </div>
           </div>
 
@@ -172,8 +213,8 @@ export default function ZonesPage() {
 </div>
 
           {/* Table */}
-     <div className="overflow-x-auto">
-  <table className="w-full min-w-[950px] text-sm">
+          <div className="w-full overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+            <table className="w-full min-w-[1100px] text-sm">
     <thead>
       <tr className="border-b border-gray-200">
         <th className="text-left py-3 px-3 lg:px-4 font-medium text-gray-600 text-[11px] lg:text-[12px]">
@@ -215,7 +256,7 @@ export default function ZonesPage() {
     </thead>
 
     <tbody>
-      {zones.map((zone) => (
+      {currentData.map((zone) => (
         <tr
           key={zone.id}
           className="border-b border-gray-100 hover:bg-gray-50"
@@ -273,26 +314,52 @@ export default function ZonesPage() {
           </td>
         </tr>
       ))}
+
+      {currentData.length === 0 && (
+        <tr>
+          <td colSpan={9} className="py-8 text-center text-sm text-gray-500">
+            No zones found.
+          </td>
+        </tr>
+      )}
     </tbody>
-  </table>
-</div>
+            </table>
+          </div>
 
           {/* Pagination */}
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-            <button className="text-sm font-medium text-gray-600 hover:text-gray-900">← Prev</button>
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ← Prev
+            </button>
             <div className="flex items-center gap-2">
-              {[1, 2, "...", 5, 6].map((page, idx) => (
+              {pageItems.map((page, idx) => (
                 <button
                   key={idx}
+                  disabled={typeof page !== "number"}
+                  onClick={() =>
+                    typeof page === "number" ? handlePageChange(page) : undefined
+                  }
                   className={`w-8 h-8 rounded text-sm font-medium ${
-                    page === 1 ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
+                    page === currentPage
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   {page}
                 </button>
               ))}
             </div>
-            <button className="text-sm font-medium text-gray-600 hover:text-gray-900">Next →</button>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next →
+            </button>
           </div>
         </div>
       </div>

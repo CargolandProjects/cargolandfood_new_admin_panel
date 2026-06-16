@@ -142,7 +142,7 @@ const sidebarData = [
         subChildren: [
           {
             name: "Refund requests",
-            href: "/refunds/requests",
+            href: "#",
             count: 2,
             color: "bg-blue-100 text-blue-600",
           },
@@ -163,8 +163,8 @@ const sidebarData = [
           { name: "Add new restaurant", href: "/restaurant_management/add" },
           { name: "Restaurant list", href: "/restaurant_management/list" },
           { name: "Request", href: "/restaurant_management/request" },
-          { name: "Bulk import", href: "/restaurant_management/bulk-import" },
-          { name: "Bulk export", href: "/restaurant_management/bulk-export" },
+          { name: "Bulk import", href: "#" },
+          { name: "Bulk export", href: "#" },
         ],
       },
     ],
@@ -174,17 +174,17 @@ const sidebarData = [
     name: "Food Management",
     icon: "/images/icons/Hamburger.png",
     children: [
-      { name: "Categories", href: "/food/categories" },
-      { name: "Addons", href: "/food/addons" },
+      { name: "Categories", href: "#" },
+      { name: "Addons", href: "#" },
       {
         name: "Food",
         subChildren: [
-          { name: "Add new", href: "/food/add" },
-          { name: "Food list", href: "/food/list" },
-          { name: "List", href: "/food/list" },
-          { name: "Review", href: "/food/list" },
-          { name: "Bulk import", href: "/food/list" },
-          { name: "Bulk export", href: "/food/list" },
+          { name: "Add new", href: "#" },
+          { name: "Food list", href: "#" },
+          { name: "List", href: "#" },
+          { name: "Review", href: "#" },
+          { name: "Bulk import", href: "#" },
+          { name: "Bulk export", href: "#" },
         ],
       },
     ],
@@ -194,22 +194,22 @@ const sidebarData = [
     name: "Customer Management",
     icon: "/images/icons/User.png",
     children: [
-      { name: "Customers", href: "/customers" },
+      { name: "Customers", href: "#" },
 
       {
         name: "Wallet",
         subChildren: [
-          { name: "Add funds", href: "/customers/wallet/add-funds" },
-          { name: "Bonus", href: "/customers/wallet/bonus" },
+          { name: "Add funds", href: "#" },
+          { name: "Bonus", href: "#" },
         ],
       },
 
       {
         name: "Loyalty point",
-        subChildren: [{ name: "Report", href: "/customers/loyalty/report" }],
+        subChildren: [{ name: "Report", href: "#" }],
       },
 
-      { name: "Subscribed mail list", href: "/customers/subscribed-mails" },
+      { name: "Subscribed mail list", href: "#" },
     ],
   },
 
@@ -217,7 +217,7 @@ const sidebarData = [
     name: "Employees",
     icon: "/images/icons/UsersThree.png",
     children: [
-      { name: "Add new employee", href: "/employees/add" },
+      { name: "Add new employee", href: "#" },
       { name: "Employee list", href: "/employees/list" },
     ],
   },

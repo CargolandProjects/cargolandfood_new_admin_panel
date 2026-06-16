@@ -49,12 +49,37 @@ export async function fetchZones(): Promise<Zone[]> {
       method: "GET",
     });
 
-    const zones = Array.isArray(data.data)
+    const initialZones = Array.isArray(data.data)
       ? data.data
       : data.data?.data ?? [];
+
+    const initialMeta = Array.isArray(data.data) ? undefined : data.data?.meta;
+    const totalPages = initialMeta?.totalPages ?? 1;
+    const itemsPerPage = initialMeta?.itemsPerPage ?? (initialZones.length || 10);
+
+    let zones = [...initialZones];
+
+    // Some APIs default to paginated responses. Aggregate all pages so UI cards and tables show complete counts.
+    if (totalPages > 1) {
+      for (let page = 2; page <= totalPages; page++) {
+        const pageData = await apiCall<ZonesResponse>(
+          `${ZONES_PROD_BASE}/zone/get-zones?page=${page}&limit=${itemsPerPage}`,
+          { method: "GET" }
+        );
+
+        const pageZones = Array.isArray(pageData.data)
+          ? pageData.data
+          : pageData.data?.data ?? [];
+
+        zones = zones.concat(pageZones);
+      }
+    }
+
+    // Avoid duplicates if API includes overlaps across pages.
+    const uniqueZones = Array.from(new Map(zones.map((zone) => [zone.id, zone])).values());
     
     // Convert GeoJSON to polygon array if needed
-    return zones.map(zone => {
+    return uniqueZones.map(zone => {
       if (!zone.polygon && zone.polygonGeoJson?.coordinates?.[0]) {
         // Convert GeoJSON coordinates to LatLng array
         zone.polygon = zone.polygonGeoJson.coordinates[0].map(([lng, lat]) => ({
