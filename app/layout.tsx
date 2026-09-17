@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { satoshi } from "./fonts";
 
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -25,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-<html lang="en" className={satoshi.variable}>
+    <html lang="en" className={satoshi.variable}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

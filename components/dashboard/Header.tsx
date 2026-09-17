@@ -129,7 +129,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
       const isUuidLike =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-          subpage
+          subpage,
         );
 
       // Get dynamic count for current page
@@ -143,10 +143,10 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           ? cachedOrder?.orderNumber || "Order"
           : isUuidLike
             ? "Order Details"
-            : orderSubpageLabelMap[subpage] ??
+            : (orderSubpageLabelMap[subpage] ??
               subpage
                 .replace(/-/g, " ")
-                .replace(/\b\w/g, (l) => l.toUpperCase()),
+                .replace(/\b\w/g, (l) => l.toUpperCase())),
         badgeCount: isOrderDetailsRoute ? "" : dynamicCount?.toString() || "0",
         showBadge: true,
       };
@@ -156,15 +156,17 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     if (segments[0] === "restaurant_management") {
       const subpage = segments[1] || "overview";
       const subtitleMap: Record<string, string> = {
-        "cuisine": "Cuisine",
+        cuisine: "Cuisine",
         "add-new-restaurant": "Add New Restaurant",
-        "request": "Request",
+        request: "Request",
         "restaurant-list": "Restaurant List",
         "zone-setup": "Zone Setup",
       };
       return {
         title: "Restaurant Management",
-        subtitle: subtitleMap[subpage] || subpage.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+        subtitle:
+          subtitleMap[subpage] ||
+          subpage.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
         showBadge: false,
       };
     }
@@ -182,7 +184,9 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
       return {
         title: "Delivery Management",
-        subtitle: isPersonnelRoute ? "Personnel" : subpage.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+        subtitle: isPersonnelRoute
+          ? "Personnel"
+          : subpage.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
         badge: cachedRider
           ? cachedRider.fullName
           : isPersonnelRoute
@@ -197,23 +201,25 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     if (segments[0] === "employees") {
       const subpage = segments[1] || "overview";
       const subtitleMap: Record<string, string> = {
-        "list": "Employee List",
-        "add": "Add New Employee",
+        list: "Employee List",
+        add: "Add New Employee",
       };
       return {
         title: "Employee Management",
-        subtitle: subtitleMap[subpage] || subpage.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+        subtitle:
+          subtitleMap[subpage] ||
+          subpage.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
         showBadge: false,
       };
     }
 
     if (segments.length === 1) {
       const title = segments[0]
-        .replace(/_/g, " ")
+        .replace(/[_-]/g, " ") // handle both _ and -
         .split(" ")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
-      return { title, subtitle: "Personnel List", showBadge: false };
+      return { title, subtitle: "", showBadge: false };
     }
 
     // For nested routes, first segment is title, rest is subtitle
@@ -230,7 +236,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           .replace(/_/g, " ")
           .split(" ")
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ")
+          .join(" "),
       )
       .join(" > ");
 
@@ -284,55 +290,53 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
       </div>
 
       {/* 3. RIGHT: ACTIONS & PROFILE */}
-     {/* RIGHT SECTION */}
-<div className="flex items-center gap-4 flex-shrink-0">
+      {/* RIGHT SECTION */}
+      <div className="flex items-center gap-4 flex-shrink-0">
+        {/* ICONS — desktop only */}
+        <div className="hidden md:flex items-center gap-3">
+          {/* Notification */}
+          <button className="relative w-10 h-10 flex items-center justify-center bg-[#E6EDED] rounded-full">
+            <Bell className="w-5 h-5 text-[#00302E]" />
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#D02F1B] text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+              1
+            </span>
+          </button>
 
-  {/* ICONS — desktop only */}
-  <div className="hidden md:flex items-center gap-3">
-    {/* Notification */}
-    <button className="relative w-10 h-10 flex items-center justify-center bg-[#E6EDED] rounded-full">
-      <Bell className="w-5 h-5 text-[#00302E]" />
-      <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#D02F1B] text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-        1
-      </span>
-    </button>
+          {/* Cart */}
+          <button className="relative w-10 h-10 flex items-center justify-center bg-[#E6EDED] rounded-full">
+            <ShoppingCart className="w-5 h-5 text-[#00302E]" />
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#D02F1B] text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+              1
+            </span>
+          </button>
+        </div>
 
-    {/* Cart */}
-    <button className="relative w-10 h-10 flex items-center justify-center bg-[#E6EDED] rounded-full">
-      <ShoppingCart className="w-5 h-5 text-[#00302E]" />
-      <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#D02F1B] text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-        1
-      </span>
-    </button>
-  </div>
+        {/* PROFILE / DROPDOWN */}
+        <div className="relative flex items-center gap-3 pl-4 md:pl-6 border-l border-gray-100 cursor-pointer group">
+          {/* Avatar */}
+          <div className="relative w-9 h-9 shrink-0">
+            <Image
+              src="/images/icons/logo.png"
+              alt="User"
+              fill
+              sizes="36px"
+              className="rounded-full bg-[#FFF2ED] p-1 object-contain"
+            />
+          </div>
 
-  {/* PROFILE / DROPDOWN */}
-  <div className="relative flex items-center gap-3 pl-4 md:pl-6 border-l border-gray-100 cursor-pointer group">
+          {/* Name + email (desktop only) */}
+          <div className="hidden md:flex flex-col leading-tight min-w-0">
+            <span className="text-sm font-bold text-[#00302E] truncate max-w-[160px]">
+              {loading ? "Loading..." : displayName}
+            </span>
+            <span className="text-[11px] text-gray-500 font-medium truncate max-w-[160px]">
+              {loading ? "..." : user?.email || "email@example.com"}
+            </span>
+          </div>
 
-    {/* Avatar */}
-    <div className="relative w-9 h-9 shrink-0">
-      <Image
-        src="/images/icons/logo.png"
-        alt="User"
-        fill
-        sizes="36px"
-        className="rounded-full bg-[#FFF2ED] p-1 object-contain"
-      />
-    </div>
-
-    {/* Name + email (desktop only) */}
-    <div className="hidden md:flex flex-col leading-tight min-w-0">
-      <span className="text-sm font-bold text-[#00302E] truncate max-w-[160px]">
-        {loading ? "Loading..." : displayName}
-      </span>
-      <span className="text-[11px] text-gray-500 font-medium truncate max-w-[160px]">
-        {loading ? "..." : user?.email || "email@example.com"}
-      </span>
-    </div>
-
-    <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
-  </div>
-</div>
+          <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+        </div>
+      </div>
     </header>
   );
 }
