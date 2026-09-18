@@ -4,6 +4,9 @@ import "./globals.css";
 import { satoshi } from "./fonts";
 import { SessionProvider } from "@/lib/providers/SessionProvider";
 import { getUserFromCookie } from "@/lib/api/auth";
+import Providers from "./auth/Providers";
+import { cn } from "@/lib/utils";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,11 +30,13 @@ export default async function RootLayout({
 }>) {
   const user = await getUserFromCookie();
   return (
-    <html lang="en" className={satoshi.variable}>
+    <html lang="en" className={cn("font-sans", satoshi.variable)}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider user={user}>{children}</SessionProvider>
+        <Providers>
+          <SessionProvider user={user}>{children}</SessionProvider>
+        </Providers>
       </body>
     </html>
   );
