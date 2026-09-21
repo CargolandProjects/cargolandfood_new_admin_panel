@@ -1,5 +1,10 @@
 export const API_ROUTES = {
   stats: {
-    vendor: "/vendors/stats",
+    dashboard: "/dashboard",
+  },
+
+  vendor: {
+    vendorStats: "/vendors/stats",
+    getVendors: "/vendors",
   },
 };

@@ -4,7 +4,7 @@ import "./globals.css";
 import { satoshi } from "./fonts";
 import { SessionProvider } from "@/lib/providers/SessionProvider";
 import { getUserFromCookie } from "@/lib/api/auth";
-import Providers from "./auth/Providers";
+import Providers from "./Providers";
 import { cn } from "@/lib/utils";
 
 

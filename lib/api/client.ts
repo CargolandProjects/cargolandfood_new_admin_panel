@@ -72,6 +72,7 @@ export async function apiCall<T>(
 
   if (!response.ok) {
     throw new Error(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (data as any)?.message || `API error: ${response.status}`
     );
   }
