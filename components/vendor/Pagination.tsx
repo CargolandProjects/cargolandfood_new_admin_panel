@@ -27,7 +27,7 @@ const getPageNumbers = (current: number, total: number): (number | "...")[] => {
   return result;
 };
 
-export default function VendorsPagination({
+export default function Pagination({
   currentPage,
   totalPages,
   onPageChange,

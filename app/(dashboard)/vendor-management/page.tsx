@@ -2,12 +2,12 @@
 
 import StatCard from "@/components/dashboard/StatCard";
 import { Button } from "@/components/ui/button";
-import VendorsPagination from "@/components/vendor/Pagination";
+import Pagination from "@/components/vendor/Pagination";
 import VendorsTable from "@/components/vendor/VendorsTable";
 import { formatIncome } from "@/lib/api/dashboard";
 import {
   useDashboard,
-  useVendorList,
+  useVendors,
   useVendorStat,
 } from "@/lib/hooks/queries/useVendor";
 import { useDebounce } from "@/lib/hooks/useDebounce";
@@ -15,7 +15,6 @@ import { useSession } from "@/lib/providers/SessionProvider";
 import { Download, Search, SlidersHorizontal, SortDesc } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Action } from "sonner";
 
 export type VendorAction = "view" | "createMenu" | "delete";
 
@@ -31,7 +30,7 @@ export default function VendorManagementPage() {
     refetch,
     isError,
     isSuccess,
-  } = useVendorList(currentPage, 10, debouncedSearch);
+  } = useVendors(currentPage, 10, debouncedSearch);
   const { data: stats, isLoading } = useVendorStat();
   const { data: dashboard, isLoading: isDashboardLoading } = useDashboard();
 
@@ -57,7 +56,7 @@ export default function VendorManagementPage() {
   };
 
   return (
-    <div className="">
+    <div>
       {/*  Stat cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
@@ -98,7 +97,7 @@ export default function VendorManagementPage() {
         />
       </div>
 
-      <h2 className="ml-4 py-5 text-base font-bold">All Vendors</h2>
+      <h2 className="my-5 pl-4 text-base font-bold">All Vendors</h2>
 
       <div className="border rounded-[16px]">
         <div className="p-4 flex gap-2 max-md:flex-col justify-between md:items-center">
@@ -138,7 +137,7 @@ export default function VendorManagementPage() {
           </div>
         </div>
 
-        <div className="">
+        <div>
           <VendorsTable
             vendors={vendors || []}
             isLoading={isLoadingVendors}
@@ -150,7 +149,7 @@ export default function VendorManagementPage() {
           />
 
           <div className="px-4 py-3">
-            <VendorsPagination
+            <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}

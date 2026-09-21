@@ -18,6 +18,33 @@ export interface VendorStats {
   pendingVendor: number;
 }
 
+interface Address {
+  id: string;
+  zoneId: string;
+  vendorId: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  latitude: string;
+  longitude: string;
+  placeId: string;
+  provider: string;
+  instructions: string;
+  setAddressDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface WorkingHours {
+  preparationTime: string;
+  dayOfWeek: number;
+  openTime: string;
+  closeTime: string;
+}
+
 export interface Vendor {
   id: string;
   country: string;
@@ -68,7 +95,15 @@ export interface Vendor {
   adminApproved: string;
   createdAt: string;
   updatedAt: string;
+  review: [];
+  address: Address[];
+  workingHours: WorkingHours[];
 }
+
+export type VendorListVendor = Omit<
+  Vendor,
+  " review" | "address" | "workingHours"
+>;
 
 export type VendorStatsResponse = ApiResponse<{
   status: string;
@@ -79,7 +114,7 @@ export type VendorStatsResponse = ApiResponse<{
 export type VendorListRes = ApiResponse<{
   status: string;
   message: string;
-  data: Vendor[];
+  data: VendorListVendor[];
   pagination: {
     page: number;
     limit: number;
@@ -87,6 +122,8 @@ export type VendorListRes = ApiResponse<{
     totalPages: number;
   };
 }>;
+
+export type GetVendorRes = ApiResponse<Vendor>;
 
 export const vendor = {
   async getDashboard() {
@@ -98,6 +135,7 @@ export const vendor = {
     );
     return res;
   },
+
   async getVendorStats() {
     const res = await apiCall<VendorStatsResponse>(
       API_ROUTES.vendor.vendorStats,
@@ -107,7 +145,8 @@ export const vendor = {
     );
     return res;
   },
-  async getVendorList(
+
+  async getVendors(
     page: number = 1,
     limit: number = 10,
     search?: string,
@@ -121,6 +160,16 @@ export const vendor = {
 
     const res = await apiCall<VendorListRes>(
       `${API_ROUTES.vendor.getVendors}?page=${page}&limit=${limit}${params}`,
+      {
+        method: "GET",
+      },
+    );
+    return res;
+  },
+
+  async getVendor(vendorId: string) {
+    const res = await apiCall<GetVendorRes>(
+      API_ROUTES.vendor.getVendor(vendorId),
       {
         method: "GET",
       },

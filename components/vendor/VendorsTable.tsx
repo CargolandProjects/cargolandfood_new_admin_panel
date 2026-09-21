@@ -20,14 +20,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import type { Vendor } from "@/lib/services/vendor.service";
+import { cn, getInitials } from "@/lib/utils";
+import type { VendorListVendor } from "@/lib/services/vendor.service";
 import TableError from "./VendorTableError";
 import VendorRowSkeleton from "./VendorRowSkeleton";
 import { VendorAction } from "@/app/(dashboard)/vendor-management/page";
 
 interface VendorsTableProps {
-  vendors: Vendor[];
+  vendors: VendorListVendor[];
   isLoading?: boolean;
   isSuccess?: boolean;
   isError?: boolean;
@@ -37,15 +37,6 @@ interface VendorsTableProps {
 }
 
 const formatNaira = (value: number) => `₦${value.toLocaleString()}`;
-
-const getInitials = (name: string) =>
-  name
-    .split(" ")
-    .filter(Boolean)
-    .map((word) => word[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
 export default function VendorsTable({
   vendors,

@@ -17,7 +17,7 @@ export const useVendorStat = () => {
   });
 };
 
-export const useVendorList = (
+export const useVendors = (
   page: number = 1,
   limit: number = 10,
   search?: string,
@@ -26,8 +26,17 @@ export const useVendorList = (
 ) => {
   return useQuery({
     queryKey: ["vendor-list", { page, limit, search, status, zoneId }],
-    queryFn: () => vendor.getVendorList(page, limit, search, status, zoneId),
+    queryFn: () => vendor.getVendors(page, limit, search, status, zoneId),
     select: (res) => res.data.data,
-    placeholderData: (prev) => prev
+    placeholderData: (prev) => prev,
+  });
+};
+
+export const useVendor = (id: string) => {
+  return useQuery({
+    queryKey: ["vendor", id],
+    queryFn: () => vendor.getVendor(id),
+    select: (res) => res.data,
+    enabled: Boolean(id),
   });
 };

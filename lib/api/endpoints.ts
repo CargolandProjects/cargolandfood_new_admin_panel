@@ -6,5 +6,6 @@ export const API_ROUTES = {
   vendor: {
     vendorStats: "/vendors/stats",
     getVendors: "/vendors",
+    getVendor: (vendorId: string) => `/vendors/${vendorId}`,
   },
 };
