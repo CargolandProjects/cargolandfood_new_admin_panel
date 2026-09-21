@@ -70,7 +70,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
             size="sm"
             className="p-2.5 h-auto text-base font-medium leading-5 rounded-md bg-primary"
           >
-            <Link href={`/vendor-management/${vendorId}/menu/new`}>
+            <Link href={`/vendor-management/${vendorId}/menu/create-menu`}>
               Create Menu
             </Link>
           </Button>
