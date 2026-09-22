@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, PlusCircle, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,8 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldLegend,
+  FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,11 +26,11 @@ import {
 } from "@/components/ui/select";
 import ImageUploadField from "@/components/vendor/menu/ImageUploadField";
 import { NewCategoryDialog } from "@/components/vendor/menu/NewCategoryModal";
-import {
-  CreateAddonDialog,
-  type AddonFormValues,
-} from "@/components/vendor/menu/AddonModal";
+import { CreateExtraModal, type AddonFormValues } from "@/components/vendor/menu/CreateExtraModal";
 import { createMenuSchema, type CreateMenuFormData } from "@/lib/schema/menu";
+import { useIsMutating } from "@tanstack/react-query";
+import { UploadedImage } from "@/lib/services/image.service";
+import { formatNumber } from "@/lib/utils";
 
 const DEFAULT_CATEGORIES = [
   "Restaurant",
@@ -42,28 +44,31 @@ export default function CreateMenuPageContent({
 }: {
   vendorId: string;
 }) {
-  const router = useRouter();
-
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [addonDialogOpen, setAddonDialogOpen] = useState(false);
   const [sizeDialogOpen, setSizeDialogOpen] = useState(false);
 
+  const isUploading = useIsMutating({ mutationKey: ["upload-image"] }) > 0;
+  const router = useRouter();
   const {
     control,
     handleSubmit,
     watch,
     reset,
     setValue,
-    formState: { errors, isSubmitting },
+    setError,
+    clearErrors,
+    formState: { isSubmitting },
   } = useForm<CreateMenuFormData>({
     resolver: zodResolver(createMenuSchema),
     defaultValues: {
       category: "",
       name: "",
       description: "",
-      price: 0,
-      image: "",
+      price: "",
+      imageUrl: "",
+      publicId: "",
       addons: [],
       sizes: [],
     },
@@ -74,13 +79,32 @@ export default function CreateMenuPageContent({
 
   const watchedAddons = watch("addons") || [];
   const watchedSizes = watch("sizes") || [];
+  const publicId = watch("publicId");
 
   const onSubmit = async (data: CreateMenuFormData) => {
     console.log(data);
     // router.push(`/vendor-management/${vendorId}/menu`);
   };
 
+  const handleError = useCallback((message: string | null) => {
+    if (message) {
+      setError("imageUrl", { type: "manual", message });
+    } else {
+      clearErrors("imageUrl");
+    }
+  }, []);
+
+  const handleUpload = (image: UploadedImage | undefined) => {
+    setValue("imageUrl", image?.imageUrl ?? "", {
+      shouldValidate: true,
+    });
+    setValue("publicId", image?.publicId ?? "", {
+      shouldValidate: true,
+    });
+  };
+
   const handleCreateCategory = (name: string) => {
+    console.log("CATEGORY SELECTED: ", name);
     setCategories((prev) => [name, ...prev]);
     setValue("category", name);
   };
@@ -96,48 +120,53 @@ export default function CreateMenuPageContent({
   return (
     <div className="mx-auto max-w-[1100px] pb-10">
       {/* Top bar */}
-      <div className="mb-6 flex items-center gap-3">
+      <div className="mb-6 flex items-center gap-6">
         <Button
           variant="outline"
-          size="icon"
           onClick={() => router.back()}
-          className="h-9 w-9 rounded-lg border-gray-200"
-          aria-label="Go back"
+          className="p-2 gap-1 border-gray-200 text-neutral-500 text-xs rounded-md"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="size-4" />
+          Back
         </Button>
-        <h1 className="text-xl font-bold text-gray-900">Create Menu</h1>
+        <h1 className="text-base font-bold">Create Menu</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        <h2 className="text-base font-bold text-gray-900">
-          General information
-        </h2>
+        <FieldSet className="p-4">
+          <FieldLegend className="pt-4 text-base font-bold">
+            General information
+          </FieldLegend>
 
-        <div className="grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-2">
-          {/* ── Left column ──────────────────────────────── */}
-          <div className="space-y-6">
+          <FieldGroup className="grid md:grid-cols-2 gap-6">
             {/* Category */}
-            <Field data-invalid={!!errors.category}>
-              <div className="flex items-center justify-between">
-                <FieldLabel htmlFor="menu-category">Category</FieldLabel>
-                <button
-                  type="button"
-                  onClick={() => setCategoryDialogOpen(true)}
-                  className="text-xs font-medium text-[#F16622] hover:underline"
-                >
-                  + New
-                </button>
-              </div>
-              <Controller
-                control={control}
-                name="category"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+            <Controller
+              name="category"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="field">
+                  <div className="flex items-center justify-between">
+                    <FieldLabel htmlFor={field.name} className="form-label">
+                      Category
+                    </FieldLabel>
+                    <button
+                      type="button"
+                      onClick={() => setCategoryDialogOpen(true)}
+                      className="text-xs font-medium text-primary hover:underline underline-offset-2"
+                    >
+                      + New
+                    </button>
+                  </div>
+
+                  <Select
+                    name={field.name}
+                    value={field.value ?? ""}
+                    onValueChange={field.onChange ?? ""}
+                  >
                     <SelectTrigger
-                      id="menu-category"
-                      aria-invalid={!!errors.category}
-                      className="h-12 w-full rounded-xl border-gray-200 text-sm text-gray-700"
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      className="form-input "
                     >
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
@@ -149,209 +178,234 @@ export default function CreateMenuPageContent({
                       ))}
                     </SelectContent>
                   </Select>
-                )}
-              />
-              <FieldError
-                errors={
-                  errors.category ? [errors.category.message ?? ""] : undefined
-                }
-              />
-            </Field>
+                  {fieldState.invalid && (
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="form-error"
+                    />
+                  )}
+                </Field>
+              )}
+            />
+
+            {/* Name */}
+            <Controller
+              control={control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="field">
+                  <FieldLabel htmlFor={field.name} className="form-label">
+                    Name
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    id={field.name}
+                    placeholder="e.g Fish biscuits"
+                    aria-invalid={fieldState.invalid}
+                    className="form-input"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="form-error"
+                    />
+                  )}
+                </Field>
+              )}
+            />
 
             {/* Description */}
-            <Field data-invalid={!!errors.description}>
-              <FieldLabel htmlFor="menu-description">Description</FieldLabel>
-              <Controller
-                control={control}
-                name="description"
-                render={({ field }) => (
-                  <Textarea
-                    {...field}
-                    id="menu-description"
-                    placeholder="Select a e.g Fish fried with flour"
-                    aria-invalid={!!errors.description}
-                    className="min-h-[120px] rounded-xl border-gray-200 text-sm"
-                  />
-                )}
-              />
-              <FieldError
-                errors={
-                  errors.description
-                    ? [errors.description.message ?? ""]
-                    : undefined
-                }
-              />
-            </Field>
+            <Controller
+              control={control}
+              name="description"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="field">
+                  <FieldLabel htmlFor={field.name} className="form-label">
+                    Description
+                  </FieldLabel>
 
-            {/* Upload Image */}
-            <Field data-invalid={!!errors.image}>
-              <FieldLabel>Upload Image</FieldLabel>
-              <Controller
-                control={control}
-                name="image"
-                render={({ field, fieldState }) => (
-                  <ImageUploadField
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    invalid={fieldState.invalid}
-                  />
-                )}
-              />
-              <FieldError
-                errors={errors.image ? [errors.image.message ?? ""] : undefined}
-              />
-            </Field>
-          </div>
-
-          {/* ── Right column ─────────────────────────────── */}
-          <div className="space-y-6">
-            {/* Name */}
-            <Field data-invalid={!!errors.name}>
-              <FieldLabel htmlFor="menu-name">Name</FieldLabel>
-              <Controller
-                control={control}
-                name="name"
-                render={({ field }) => (
                   <Input
                     {...field}
-                    id="menu-name"
-                    placeholder="e.g Fish biscuits"
-                    aria-invalid={!!errors.name}
-                    className="h-12 rounded-xl border-gray-200 text-sm"
+                    id={field.name}
+                    placeholder="Select a e.g Fish fried with flour"
+                    aria-invalid={fieldState.invalid}
+                    className="form-input"
                   />
-                )}
-              />
-              <FieldError
-                errors={errors.name ? [errors.name.message ?? ""] : undefined}
-              />
-            </Field>
+
+                  {fieldState.invalid && (
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="form-error"
+                    />
+                  )}
+                </Field>
+              )}
+            />
 
             {/* Price */}
-            <Field data-invalid={!!errors.price}>
-              <FieldLabel htmlFor="menu-price">Price</FieldLabel>
-              <Controller
-                control={control}
-                name="price"
-                render={({ field }) => (
+            <Controller
+              control={control}
+              name="price"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="field">
+                  <FieldLabel htmlFor={field.name} className="form-label">
+                    Price
+                  </FieldLabel>
+
                   <Input
-                    id="menu-price"
-                    type="number"
-                    inputMode="decimal"
+                    {...field}
+                    id={field.name}
+                    value={formatNumber(field.value)}
+                    onChange={(e) =>
+                      field.onChange(e.target.value.replace(/\D/g, ""))
+                    }
                     placeholder="₦0"
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                    ref={field.ref}
-                    aria-invalid={!!errors.price}
-                    className="h-12 rounded-xl border-gray-200 text-sm"
+                    aria-invalid={fieldState.invalid}
+                    className="form-input"
                   />
+
+                  {fieldState.invalid && (
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="form-error"
+                    />
+                  )}
+                </Field>
+              )}
+            />
+
+            {/* Upload Image */}
+            <Controller
+              control={control}
+              name="imageUrl"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="field">
+                  <FieldLabel htmlFor={field.name} className="form-label">
+                    Upload Image
+                  </FieldLabel>
+                  <ImageUploadField
+                    value={field.value}
+                    onChange={handleUpload}
+                    onBlur={field.onBlur}
+                    onError={handleError}
+                    invalid={fieldState.invalid}
+                    publicId={publicId}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="form-error"
+                    />
+                  )}
+                </Field>
+              )}
+            />
+
+            {/* Right column */}
+            <div className="space-y-6">
+              {/* Create add-ons */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium">Create add-ons</h3>
+                  <button
+                    type="button"
+                    onClick={() => setAddonDialogOpen(true)}
+                    className="text-primary hover:opacity-80"
+                    aria-label="Add add-on"
+                  >
+                    <PlusCircle className="size-5" strokeWidth={2.5} />
+                  </button>
+                </div>
+
+                {watchedAddons.length > 0 && (
+                  <ul className="mt-3 space-y-1.5">
+                    {watchedAddons.map((addon, index) => (
+                      <li
+                        key={addonsArray.fields[index]?.id}
+                        className="p-2.5 flex items-center justify-between text-xs font-medium border-2 border-gray-100 rounded-sm"
+                      >
+                        <span className="text-gray-700">{addon.name}</span>
+                        <div className="flex gap-1 items-center">
+                          <span className="text-gray-500">
+                            ₦{formatNumber(addon.price)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => addonsArray.remove(index)}
+                            className="text-gray-400 hover:text-red-500"
+                            aria-label={`Remove ${addon.name}`}
+                          >
+                            <X className="size-4 text-neutral-300" />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
-              />
-              <FieldError
-                errors={errors.price ? [errors.price.message ?? ""] : undefined}
-              />
-            </Field>
-
-            {/* Create add-ons */}
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-800">
-                  Create add-ons
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setAddonDialogOpen(true)}
-                  className="text-[#F16622] hover:opacity-80"
-                  aria-label="Add add-on"
-                >
-                  <Plus className="h-5 w-5" strokeWidth={2.5} />
-                </button>
               </div>
 
-              {watchedAddons.length > 0 && (
-                <ul className="mt-2 space-y-1.5">
-                  {watchedAddons.map((addon, index) => (
-                    <li
-                      key={addonsArray.fields[index]?.id}
-                      className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm"
-                    >
-                      <span className="text-gray-700">
-                        {addon.name} — ₦{addon.price}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => addonsArray.remove(index)}
-                        className="text-gray-400 hover:text-red-500"
-                        aria-label={`Remove ${addon.name}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+              {/* Sizes */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium">Sizes</h3>
+                  <button
+                    type="button"
+                    onClick={() => setSizeDialogOpen(true)}
+                    className="text-primary  hover:opacity-80"
+                    aria-label="Add size"
+                  >
+                    <PlusCircle className="size-5" strokeWidth={2.5} />
+                  </button>
+                </div>
 
-            {/* Sizes */}
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-800">Sizes</span>
-                <button
-                  type="button"
-                  onClick={() => setSizeDialogOpen(true)}
-                  className="text-[#F16622] hover:opacity-80"
-                  aria-label="Add size"
-                >
-                  <Plus className="h-5 w-5" strokeWidth={2.5} />
-                </button>
+                {watchedSizes.length > 0 && (
+                  <ul className="mt-3 space-y-1.5">
+                    {watchedSizes.map((size, index) => (
+                      <li
+                        key={sizesArray.fields[index]?.id}
+                        className="p-2.5 flex items-center justify-between text-xs font-medium border-2 border-gray-100 rounded-sm"
+                      >
+                        <span className="text-gray-700">{size.name}</span>
+                        <div className="flex gap-1 items-center">
+                          <span className="text-gray-500">
+                            ₦{formatNumber(size.price)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => sizesArray.remove(index)}
+                            className="text-gray-400 hover:text-red-500"
+                            aria-label={`Remove ${size.name}`}
+                          >
+                            <X className="size-4 text-neutral-300" />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-
-              {watchedSizes.length > 0 && (
-                <ul className="mt-2 space-y-1.5">
-                  {watchedSizes.map((size, index) => (
-                    <li
-                      key={sizesArray.fields[index]?.id}
-                      className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm"
-                    >
-                      <span className="text-gray-700">
-                        {size.name} — ₦{size.price}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => sizesArray.remove(index)}
-                        className="text-gray-400 hover:text-red-500"
-                        aria-label={`Remove ${size.name}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </div>
+          </FieldGroup>
+
+          {/* Actions */}
+          <div className="flex items-center justify-between pt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => reset()}
+              className="px-10 py-2.5 h-auto border-gray-200 text-sm font-medium rounded-sm "
+            >
+              Reset
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || isUploading}
+              className="px-10 py-2.5 h-auto text-sm font-medium rounded-sm bg-primary/15 text-[#8B4513] hover:bg-[#fcd5be]"
+            >
+              {isSubmitting ? "Saving..." : "Save"}
+            </Button>
           </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-6">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => reset()}
-            className="h-11 rounded-xl border-gray-200 px-8 text-sm font-medium"
-          >
-            Reset
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="h-11 rounded-xl bg-[#FDE3D3] px-10 text-sm font-medium text-[#8B4513] hover:bg-[#fcd5be]"
-          >
-            {isSubmitting ? "Saving..." : "Save"}
-          </Button>
-        </div>
+        </FieldSet>
       </form>
 
       {/* Modals */}
@@ -360,12 +414,12 @@ export default function CreateMenuPageContent({
         onOpenChange={setCategoryDialogOpen}
         onCreate={handleCreateCategory}
       />
-      <CreateAddonDialog
+      <CreateExtraModal
         open={addonDialogOpen}
         onOpenChange={setAddonDialogOpen}
         onAdd={handleAddAddon}
       />
-      <CreateAddonDialog
+      <CreateExtraModal
         open={sizeDialogOpen}
         onOpenChange={setSizeDialogOpen}
         onAdd={handleAddSize}

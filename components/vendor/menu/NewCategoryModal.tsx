@@ -27,12 +27,7 @@ export function NewCategoryDialog({
   onOpenChange,
   onCreate,
 }: NewCategoryDialogProps) {
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<CategoryFormValues>({
+  const { control, handleSubmit, reset } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: { name: "" },
   });
@@ -49,36 +44,31 @@ export function NewCategoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[400px] p-6">
-        <DialogTitle className="text-xl font-bold text-gray-900">
-          New Category
-        </DialogTitle>
+      <DialogContent className="max-w-[400px] py-6! px-7! gap-6!">
+        <DialogTitle className="text-2xl font-bold">New Category</DialogTitle>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-5">
-          <Field data-invalid={!!errors.name}>
-            <FieldLabel htmlFor="category-name">Name</FieldLabel>
-            <Controller
-              control={control}
-              name="name"
-              render={({ field }) => (
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Controller
+            control={control}
+            name="name"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid} className="gap-1">
+                <FieldLabel htmlFor={field.name}>Name</FieldLabel>
                 <Input
                   {...field}
-                  id="category-name"
+                  id={field.name}
                   placeholder="e.g. Burgers"
-                  aria-invalid={!!errors.name}
-                  className="h-12 rounded-xl bg-gray-50"
+                  aria-invalid={fieldState.invalid}
+                  className="h-10! focus-visible:ring-1! focus-visible:ring-primary! border-none! rounded-[6px]! placeholder:text-xs placeholder:font-medium placeholder:text-neutral-300! bg-gray-100/70!"
                 />
-              )}
-            />
-            <FieldError
-              errors={errors.name ? [errors.name.message ?? ""] : undefined}
-            />
-          </Field>
+              </Field>
+            )}
+          />
 
-          <div className="grid grid-cols-2 gap-3 pt-1">
+          <div className="mt-6 grid grid-cols-2 gap-4">
             <Button
               type="submit"
-              className="h-11 rounded-xl bg-[#F16622] text-white hover:bg-[#d95b1c]"
+              className="py-3 h-auto bg-primary font-bold text-white hover:bg-primary/90 duration-200 rounded-lg"
             >
               Create
             </Button>
@@ -86,7 +76,7 @@ export function NewCategoryDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="h-11 rounded-xl border-gray-200 text-gray-700"
+              className="py-3 h-auto font-bold text-gray-500 border-gray-300 rounded-lg"
             >
               Cancel
             </Button>

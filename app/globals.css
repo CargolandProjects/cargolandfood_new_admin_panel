@@ -125,13 +125,43 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
-  button:not(:disabled), [role="button"]:not(:disabled) {
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
   html {
     @apply font-sans;
+  }
+
+  @layer utilities {
+    .form-title {
+      @apply font-medium sm:font-bold text-2xl sm:text-[32px] leading-8 sm:leading-10;
+    }
+
+    .form-label {
+      @apply font-normal text-sm text-neutral-500
+    }
+
+    .form-input {
+      @apply h-10! focus-visible:ring-0! focus-visible:border-primary! border-2! border-gray-100! rounded-[6px]! placeholder:text-xs placeholder:font-medium placeholder:text-neutral-300!
+    }
+
+    .form-description {
+      @apply font-normal text-base text-neutral-600 leading-5
+    }
+
+    .field {
+      @apply gap-3!
+    }
+
+    .form-error {
+      @apply text-xs! mt-0.5
+    }
   }
 }

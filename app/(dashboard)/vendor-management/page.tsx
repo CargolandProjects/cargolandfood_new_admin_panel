@@ -11,7 +11,6 @@ import {
   useVendorStat,
 } from "@/lib/hooks/queries/useVendor";
 import { useDebounce } from "@/lib/hooks/useDebounce";
-import { useSession } from "@/lib/providers/SessionProvider";
 import { Download, Search, SlidersHorizontal, SortDesc } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -34,8 +33,6 @@ export default function VendorManagementPage() {
   const { data: stats, isLoading } = useVendorStat();
   const { data: dashboard, isLoading: isDashboardLoading } = useDashboard();
 
-  const session = useSession();
-
   const totalPages = 5;
 
   // reset to page 1 whenever the search term changes
@@ -50,7 +47,7 @@ export default function VendorManagementPage() {
   const onAction = (action: VendorAction, vendorId: string) => {
     if (action === "view") router.push(`/vendor-management/${vendorId}`);
     if (action === "createMenu")
-      router.push(`/vendor-management/${vendorId}/create-menu`);
+      router.push(`/vendor-management/${vendorId}/menu/create-menu`);
     if (action === "delete") {
     }
   };

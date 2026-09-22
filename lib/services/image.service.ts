@@ -1,3 +1,6 @@
+import { apiCall } from "../api/client";
+import { API_ROUTES } from "../api/endpoints";
+
 const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const CLOUDINARY_UPLOAD_PRESET =
   process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
@@ -9,8 +12,13 @@ const ALLOWED_IMAGE_FORMATS = [
   "image/webp",
 ];
 
+export interface UploadedImage {
+  imageUrl: string; // Cloudinary secure_url
+  publicId: string; // Cloudinary public_id — required for delete
+}
+
 export const image = {
-  async uploadImageToCloudinary(file: File): Promise<string> {
+  async uploadImageToCloudinary(file: File): Promise<UploadedImage> {
     // Validate environment variables
     if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
       throw new Error(
@@ -54,7 +62,10 @@ export const image = {
       }
 
       const data = await response.json();
-      return data.secure_url; // Returns the Cloudinary URL
+      return {
+        imageUrl: data.secure_url, // Cloudinary secure_url
+        publicId: data.public_id, // Cloudinary public_id — required for delete
+      };
     } catch (error) {
       console.error("Cloudinary upload error:", error);
 
@@ -65,5 +76,12 @@ export const image = {
 
       throw new Error("Image upload failed. Please try again");
     }
+  },
+
+  async deleteImageFromStorage(publicId: string): Promise<void> {
+    await apiCall(API_ROUTES.image.delete(publicId), {
+      method: "DELETE",
+      body: JSON.stringify({ publicId }),
+    });
   },
 };

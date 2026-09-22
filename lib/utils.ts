@@ -8,3 +8,9 @@ export const getInitials = (name: string) =>
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
+export const formatNumber = (value: string) => {
+  if (!value) return "";
+  const number = value.replace(/\D/g, ""); // remove non-digits
+  return new Intl.NumberFormat("en-US").format(Number(number));
+};

@@ -9,3 +9,12 @@ export const useUploadImage = () => {
     onError: () => toast.error("Image upload failed"),
   });
 };
+
+export const useDeleteImage = () => {
+  return useMutation({
+    mutationKey: ["upload-image"],
+    mutationFn: image.deleteImageFromStorage,
+    onSuccess: () => toast.success("Image deleted successful"),
+    onError: () => toast.error("failed to delete image"),
+  });
+};
