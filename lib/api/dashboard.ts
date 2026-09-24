@@ -209,6 +209,7 @@ export interface DashboardStats {
 
 export interface DashboardSchedule {
   totalCount: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   upcoming: any[];
 }
 

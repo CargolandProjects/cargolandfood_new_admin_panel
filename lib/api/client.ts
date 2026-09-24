@@ -31,7 +31,14 @@ export async function apiCall<T>(
     }
   }
 
-  headers.set("Content-Type", "application/json");
+  // Only default to JSON when the caller isn't sending FormData (which needs
+  // the browser to set its own multipart boundary) and hasn't set a
+  // Content-Type themselves.
+  const isFormData =
+    typeof FormData !== "undefined" && fetchOptions.body instanceof FormData;
+  if (!isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
   let response = await fetch(url, {
     ...fetchOptions,
@@ -71,9 +78,12 @@ export async function apiCall<T>(
   const data: T = await response.json();
 
   if (!response.ok) {
-    throw new Error(
-      (data as any)?.message || `API error: ${response.status}`
-    );
+    const message =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (data as any)?.message || `API error: ${response.status}`;
+    const error = new Error(message) as Error & { statusCode: number };
+    error.statusCode = response.status;
+    throw error;
   }
 
   return data;

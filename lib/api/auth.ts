@@ -52,7 +52,7 @@ export async function loginAdmin(payload: LoginPayload): Promise<AuthResponse> {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify(payload),
     });
@@ -65,8 +65,10 @@ export async function loginAdmin(payload: LoginPayload): Promise<AuthResponse> {
 
     // Store tokens in cookies via server action
     if (data.data?.accessToken && data.data?.refreshToken) {
-      const { setAuthCookies } = await import("@/lib/actions/auth");
+      const { setAuthCookies, setSessionUser } =
+        await import("@/lib/actions/auth");
       await setAuthCookies(data.data.accessToken, data.data.refreshToken);
+      await setSessionUser(data.data.user);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("auth:updated"));
       }
@@ -126,7 +128,7 @@ export async function refreshAccessToken(): Promise<string> {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify({ refreshToken }),
     });
@@ -146,7 +148,7 @@ export async function refreshAccessToken(): Promise<string> {
       const { setAuthCookies } = await import("@/lib/actions/auth");
       await setAuthCookies(
         data.data.accessToken,
-        data.data?.refreshToken || refreshToken
+        data.data?.refreshToken || refreshToken,
       );
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("auth:updated"));
@@ -165,15 +167,17 @@ export async function refreshAccessToken(): Promise<string> {
 
 export async function getUserFromCookie(): Promise<User | null> {
   try {
-    const { getAccessToken } = await import("@/lib/actions/auth");
-    const accessToken = await getAccessToken();
+    const { getSessionUser } = await import("@/lib/actions/auth");
 
-    if (!accessToken) {
-      return null;
-    }
+    // Fast path: read from cookie, no network
+    const cached = await getSessionUser();
+    if (cached) return cached;
 
-    // Fetch profile using the access token
-    return await getProfile();
+    // Slow path: cookie missing/expired — fall back to fetching
+    const user = await getProfile();
+    const { setSessionUser } = await import("@/lib/actions/auth");
+    await setSessionUser(user);
+    return user;
   } catch (error) {
     console.error("Get user error:", error);
     return null;

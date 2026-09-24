@@ -53,15 +53,15 @@ const sidebarData = [
             count: 2,
             color: "bg-blue-100 text-blue-600",
           },
-            {
+          {
             name: "Ready",
-              href: "/order_management/ready",
+            href: "/order_management/ready",
             count: 2,
             color: "bg-blue-100 text-blue-600",
           },
-            {
+          {
             name: "Assign",
-              href: "/order_management/assign",
+            href: "/order_management/assign",
             count: 2,
             color: "bg-blue-100 text-blue-600",
           },
@@ -118,17 +118,17 @@ const sidebarData = [
             href: "/order_management/accepted",
             count: 2,
           },
-            {
+          {
             name: "Pick up",
             href: "/order_management/ready",
             count: 2,
           },
-            {
+          {
             name: "Arrived",
             href: "/order_management/arrived",
             count: 2,
           },
-            {
+          {
             name: "Delivered",
             href: "/order_management/delivered",
             count: 2,
@@ -211,6 +211,12 @@ const sidebarData = [
 
       { name: "Subscribed mail list", href: "#" },
     ],
+  },
+
+  {
+    name: "Vendor Management",
+    icon: "/images/icons/restaurant-2-line.svg",
+    href: "/vendor-management",
   },
 
   {
@@ -432,46 +438,46 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
         className="w-72 bg-[#F8F9FA] border-r border-gray-200 flex flex-col h-screen overflow-y-auto font-satoshi"
         aria-busy={isLoggingOut}
       >
-      {/* Header */}
-      <div className="p-4 bg-white flex items-center justify-between sticky top-0 z-10 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <Image
-            src="/images/icons/logo.png"
-            alt="Logo"
-            width={32}
-            height={32}
-          />
-          <span className="text-[#F16622] font-bold text-lg">
-            Cargoland Food
-          </span>
+        {/* Header */}
+        <div className="p-4 bg-white flex items-center justify-between sticky top-0 z-10 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/images/icons/logo.png"
+              alt="Logo"
+              width={32}
+              height={32}
+            />
+            <span className="text-[#F16622] font-bold text-lg">
+              Cargoland Food
+            </span>
+          </div>
+          <LayoutTemplate className="w-5 h-5 text-gray-400 cursor-pointer" />
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden p-1 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          )}
         </div>
-        <LayoutTemplate className="w-5 h-5 text-gray-400 cursor-pointer" />
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="lg:hidden p-1 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Close menu"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        )}
-      </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {sidebarData.map((item) => (
-          <NavItem
-            key={item.name}
-            item={item}
-            pathname={pathname}
-            openMenus={openMenus}
-            toggleMenu={toggleMenu}
-            level={0}
-            onLogout={handleLogout}
-            isLoggingOut={isLoggingOut}
-            orderCounts={orderCounts}
-          />
-        ))}
-      </nav>
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {sidebarData.map((item) => (
+            <NavItem
+              key={item.name}
+              item={item}
+              pathname={pathname}
+              openMenus={openMenus}
+              toggleMenu={toggleMenu}
+              level={0}
+              onLogout={handleLogout}
+              isLoggingOut={isLoggingOut}
+              orderCounts={orderCounts}
+            />
+          ))}
+        </nav>
       </aside>
     </>
   );
@@ -508,19 +514,22 @@ type NavItemProps = {
 };
 
 // Helper function to get the dynamic count for a menu item
-function getCountForMenuItem(item: NavMenuItem, orderCounts: Record<string, number> = {}): number | undefined {
+function getCountForMenuItem(
+  item: NavMenuItem,
+  orderCounts: Record<string, number> = {},
+): number | undefined {
   const countKeyMap: Record<string, string> = {
-    "All": "all",
-    "New": "new",
-    "Accepted": "accepted",
+    All: "all",
+    New: "new",
+    Accepted: "accepted",
     "Pick up": "ready",
-    "Arrived": "arrived",
-    "Preparing": "processing",
-    "Ready": "ready",
-    "Assign": "assign",
+    Arrived: "arrived",
+    Preparing: "processing",
+    Ready: "ready",
+    Assign: "assign",
     "In transit": "in-transit",
-    "Delivered": "delivered",
-    "Cancelled": "cancelled",
+    Delivered: "delivered",
+    Cancelled: "cancelled",
     "Payment failed": "payment-failed",
   };
 
@@ -665,7 +674,9 @@ function NavItem({
             <span
               className={`text-[15px] leading-tight ${level > 0 ? "ml-2" : ""}`}
             >
-              {item.name === "Log Out" && isLoggingOut ? "Logging out..." : item.name}
+              {item.name === "Log Out" && isLoggingOut
+                ? "Logging out..."
+                : item.name}
             </span>
           </div>
 

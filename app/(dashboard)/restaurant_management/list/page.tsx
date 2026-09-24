@@ -6,7 +6,11 @@ import { MoreVertical, Star } from "lucide-react";
 import StatCard from "@/components/dashboard/StatCard";
 import DataTable from "@/components/dashboard/DataTable";
 import { Badge } from "@/components/dashboard/Badge";
-import { fetchVendors, toggleVendorStatus, type RestaurantRow } from "@/lib/api/vendors";
+import {
+  fetchVendors,
+  toggleVendorStatus,
+  type RestaurantRow,
+} from "@/lib/api/vendors";
 
 export default function RestaurantListPage() {
   const router = useRouter();
@@ -29,23 +33,29 @@ export default function RestaurantListPage() {
     // Optimistic flip
     setRestaurants((prev) =>
       prev.map((r) =>
-        r.id === id ? { ...r, status: r.status === "Active" ? "Inactive" : "Active" } : r
-      )
+        r.id === id
+          ? { ...r, status: r.status === "Active" ? "Inactive" : "Active" }
+          : r,
+      ),
     );
     try {
       const newIsActive = await toggleVendorStatus(id);
       // Sync with actual API response
       setRestaurants((prev) =>
         prev.map((r) =>
-          r.id === id ? { ...r, status: newIsActive ? "Active" : "Inactive" } : r
-        )
+          r.id === id
+            ? { ...r, status: newIsActive ? "Active" : "Inactive" }
+            : r,
+        ),
       );
     } catch {
       // Revert on failure
       setRestaurants((prev) =>
         prev.map((r) =>
-          r.id === id ? { ...r, status: r.status === "Active" ? "Inactive" : "Active" } : r
-        )
+          r.id === id
+            ? { ...r, status: r.status === "Active" ? "Inactive" : "Active" }
+            : r,
+        ),
       );
     } finally {
       setTogglingId(null);
@@ -142,9 +152,7 @@ export default function RestaurantListPage() {
     {
       key: "joinDate",
       label: "Join Date",
-      render: (value: string) => (
-        <span className="text-gray-500">{value}</span>
-      ),
+      render: (value: string) => <span className="text-gray-500">{value}</span>,
     },
     {
       key: "action",
