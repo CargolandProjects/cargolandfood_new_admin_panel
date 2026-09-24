@@ -3,7 +3,7 @@ import { z } from "zod";
 export const addonSchema = z.object({
   name: z.string().min(1, "Add-on name is required"),
   price: z.string().min(2, "Price is required"),
-  addonImage: z.string().url("Addon image is required"),
+  addonImage: z.string().optional(),
 });
 
 export const sizeSchema = z.object({

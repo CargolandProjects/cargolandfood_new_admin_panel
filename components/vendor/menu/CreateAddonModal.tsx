@@ -24,8 +24,8 @@ interface CreateAddonDialogProps {
 export const addonSchema = z.object({
   name: z.string().min(1, "Add-on name is required"),
   price: z.string().min(2, "Price is required"),
-  addonImage: z.string().min(1, "Addon image is required"),
-  publicUrl: z.string().min(1, "Image is required"),
+  addonImage: z.string().optional(),
+  publicUrl: z.string().optional(),
 });
 
 type AddonFormData = z.infer<typeof addonSchema>;

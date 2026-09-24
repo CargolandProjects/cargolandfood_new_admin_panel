@@ -98,7 +98,7 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
           onClick={() =>
             router.push(`/vendor-management/${vendorId}/menu/create-menu?`)
           }
-          className="rounded-md bg-[#F16622] px-5 text-sm font-medium text-white hover:bg-[#d95b1c]"
+          className="p-2.5 h-auto text-base font-medium leading-5 rounded-md bg-primary"
         >
           Create Menu
         </Button>
@@ -155,7 +155,7 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
         </div>
 
         {/* Table */}
-        <div >
+        <div>
           <MenuTable
             items={filteredItems}
             isLoading={isLoading}

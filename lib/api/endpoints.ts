@@ -5,7 +5,7 @@ export const API_ROUTES = {
 
   vendor: {
     vendorStats: "/vendors/stats",
-    getVendors: "/vendors",
+    getVendors: "/vendors/approved-requests",
     getVendor: (vendorId: string) => `/vendors/${vendorId}`,
     CreateVendorMenu: (vendorId: string) => `/vendors/create-menu/${vendorId}`,
     getVendorMenu: (vendorId: string) => `/vendors/get-menus/${vendorId}`,
