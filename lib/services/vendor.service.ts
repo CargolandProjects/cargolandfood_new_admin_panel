@@ -19,6 +19,38 @@ export interface VendorStats {
   pendingVendor: number;
 }
 
+export interface MenuItemAddon {
+  id: string;
+  name: string;
+  price: string;
+  addonImage: string | null;
+  menuId: string;
+  createdBy: string | null;
+  createdAt: string;
+  upddatedAt: string; // backend typo — kept as-is
+}
+
+export interface MenuItemSize {
+  id: string;
+  name: string;
+  price: string;
+  sizeImage?: string | null;
+  menuId: string;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MenuItemCategory {
+  id: string;
+  name: string;
+  publishNow: boolean;
+  vendorId: string | null;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -33,6 +65,10 @@ export interface MenuItem {
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+  addons?: MenuItemAddon[];
+  sizes?: MenuItemSize[];
+  category?: MenuItemCategory;
+  PromotionItem?: unknown[];
 }
 
 interface Address {
@@ -60,6 +96,13 @@ interface WorkingHours {
   dayOfWeek: number;
   openTime: string;
   closeTime: string;
+}
+
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 export interface Vendor {
@@ -121,7 +164,7 @@ type CreateMenuData = CreateMenuFormData & { createdBy: string };
 
 export type VendorListVendor = Omit<
   Vendor,
-  " review" | "address" | "workingHours"
+  "review" | "address" | "workingHours"
 >;
 
 export type VendorStatsResponse = ApiResponse<{
@@ -134,12 +177,7 @@ export type VendorListRes = ApiResponse<{
   status: string;
   message: string;
   data: VendorListVendor[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: Pagination;
 }>;
 
 type CreateMenuRes = ApiResponse<{
@@ -148,6 +186,12 @@ type CreateMenuRes = ApiResponse<{
 }>;
 
 export type GetVendorRes = ApiResponse<Vendor>;
+
+type VendorMenu = ApiResponse<{
+  message: string;
+  data: MenuItem[];
+  pagination: Pagination;
+}>;
 
 export const vendor = {
   async getDashboard() {
@@ -208,9 +252,19 @@ export const vendor = {
     vendorId: string;
     data: CreateMenuData;
   }) {
-    const res = apiCall<CreateMenuRes>(API_ROUTES.vendor.CreateVendorMenu(vendorId), {
-      method: "POST",
-      body: JSON.stringify(data),
+    const res = apiCall<CreateMenuRes>(
+      API_ROUTES.vendor.CreateVendorMenu(vendorId),
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
+    return res;
+  },
+
+  async getVendorMenu(vendorId: string) {
+    const res = apiCall<VendorMenu>(API_ROUTES.vendor.getVendorMenu(vendorId), {
+      method: "GET",
     });
     return res;
   },
