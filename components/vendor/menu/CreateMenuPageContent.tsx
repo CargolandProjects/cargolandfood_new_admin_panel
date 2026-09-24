@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -26,11 +26,21 @@ import {
 } from "@/components/ui/select";
 import ImageUploadField from "@/components/vendor/menu/ImageUploadField";
 import { NewCategoryDialog } from "@/components/vendor/menu/NewCategoryModal";
-import { CreateExtraModal, type AddonFormValues } from "@/components/vendor/menu/CreateExtraModal";
-import { createMenuSchema, type CreateMenuFormData } from "@/lib/schema/menu";
+import { CreateSizeModal } from "@/components/vendor/menu/CreateSizeModal";
+import {
+  AddonFormValues,
+  createMenuSchema,
+  sizeFormValues,
+  type CreateMenuFormData,
+} from "@/lib/schema/menu";
 import { useIsMutating } from "@tanstack/react-query";
 import { UploadedImage } from "@/lib/services/image.service";
 import { formatNumber } from "@/lib/utils";
+import { useCreateVendorMenu } from "@/lib/hooks/mutations/useVendorMenu";
+import { toast } from "sonner";
+import { CreateAddonModal } from "./CreateAddonModal";
+import { useSession } from "@/lib/providers/SessionProvider";
+import { useGetCuisines } from "@/lib/hooks/queries/useCuisines";
 
 const DEFAULT_CATEGORIES = [
   "Restaurant",
@@ -44,13 +54,16 @@ export default function CreateMenuPageContent({
 }: {
   vendorId: string;
 }) {
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [addonDialogOpen, setAddonDialogOpen] = useState(false);
   const [sizeDialogOpen, setSizeDialogOpen] = useState(false);
+  const { data: cuisines, isFetching: isCuisineLoading } = useGetCuisines();
+  const { mutate: createMenu, isPending: isCreating } = useCreateVendorMenu();
 
   const isUploading = useIsMutating({ mutationKey: ["upload-image"] }) > 0;
   const router = useRouter();
+  const session = useSession();
+
   const {
     control,
     handleSubmit,
@@ -59,61 +72,83 @@ export default function CreateMenuPageContent({
     setValue,
     setError,
     clearErrors,
-    formState: { isSubmitting },
+    formState,
   } = useForm<CreateMenuFormData>({
     resolver: zodResolver(createMenuSchema),
     defaultValues: {
-      category: "",
+      categoryId: "",
       name: "",
       description: "",
       price: "",
-      imageUrl: "",
-      publicId: "",
+      uploadImageUrl: "",
+      publicUrl: "",
       addons: [],
       sizes: [],
     },
   });
+
+  //  to log form errors
+  // useEffect(() => {
+  //   console.log("FORM_STATE: ", formState.errors);
+  // }, [formState.errors]);
 
   const addonsArray = useFieldArray({ control, name: "addons" });
   const sizesArray = useFieldArray({ control, name: "sizes" });
 
   const watchedAddons = watch("addons") || [];
   const watchedSizes = watch("sizes") || [];
-  const publicId = watch("publicId");
+  const publicId = watch("publicUrl");
 
   const onSubmit = async (data: CreateMenuFormData) => {
     console.log(data);
-    // router.push(`/vendor-management/${vendorId}/menu`);
+
+    if (!session) return;
+
+    const categoryId =
+      cuisines?.find((c) => c.name === data.categoryId)?.id || "";
+    const payload = {
+      ...data,
+      categoryId,
+      createdBy: session.id,
+    };
+
+    if (!vendorId) {
+      toast.error("Vendor id not found");
+      return;
+    }
+
+    createMenu(
+      { vendorId, data: payload },
+      {
+        onSuccess: () => {
+          reset();
+        },
+      },
+    );
   };
 
   const handleError = useCallback((message: string | null) => {
     if (message) {
-      setError("imageUrl", { type: "manual", message });
+      setError("uploadImageUrl", { type: "manual", message });
     } else {
-      clearErrors("imageUrl");
+      clearErrors("uploadImageUrl");
     }
   }, []);
 
   const handleUpload = (image: UploadedImage | undefined) => {
-    setValue("imageUrl", image?.imageUrl ?? "", {
+    setValue("uploadImageUrl", image?.url ?? "", {
       shouldValidate: true,
     });
-    setValue("publicId", image?.publicId ?? "", {
+    setValue("publicUrl", image?.publicId ?? "", {
       shouldValidate: true,
     });
-  };
-
-  const handleCreateCategory = (name: string) => {
-    console.log("CATEGORY SELECTED: ", name);
-    setCategories((prev) => [name, ...prev]);
-    setValue("category", name);
   };
 
   const handleAddAddon = (values: AddonFormValues) => {
     addonsArray.append(values);
   };
 
-  const handleAddSize = (values: AddonFormValues) => {
+  const handleAddSize = (values: sizeFormValues) => {
     sizesArray.append(values);
   };
 
@@ -141,7 +176,7 @@ export default function CreateMenuPageContent({
           <FieldGroup className="grid md:grid-cols-2 gap-6">
             {/* Category */}
             <Controller
-              name="category"
+              name="categoryId"
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid} className="field">
@@ -162,18 +197,23 @@ export default function CreateMenuPageContent({
                     name={field.name}
                     value={field.value ?? ""}
                     onValueChange={field.onChange ?? ""}
+                    disabled={isCuisineLoading}
                   >
                     <SelectTrigger
                       id={field.name}
                       aria-invalid={fieldState.invalid}
                       className="form-input "
                     >
-                      <SelectValue placeholder="Select a category" />
+                      <SelectValue
+                        placeholder={
+                          isCuisineLoading ? "loading..." : "Select a category"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
+                      {(cuisines || []).map((cuisine) => (
+                        <SelectItem key={cuisine.id} value={cuisine.name}>
+                          {cuisine.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -277,7 +317,7 @@ export default function CreateMenuPageContent({
             {/* Upload Image */}
             <Controller
               control={control}
-              name="imageUrl"
+              name="uploadImageUrl"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid} className="field">
                   <FieldLabel htmlFor={field.name} className="form-label">
@@ -399,10 +439,10 @@ export default function CreateMenuPageContent({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || isUploading}
+              disabled={isUploading}
               className="px-10 py-2.5 h-auto text-sm font-medium rounded-sm bg-primary/15 text-[#8B4513] hover:bg-[#fcd5be]"
             >
-              {isSubmitting ? "Saving..." : "Save"}
+              {isUploading ? "Saving..." : "Save"}
             </Button>
           </div>
         </FieldSet>
@@ -412,14 +452,13 @@ export default function CreateMenuPageContent({
       <NewCategoryDialog
         open={categoryDialogOpen}
         onOpenChange={setCategoryDialogOpen}
-        onCreate={handleCreateCategory}
       />
-      <CreateExtraModal
+      <CreateAddonModal
         open={addonDialogOpen}
         onOpenChange={setAddonDialogOpen}
         onAdd={handleAddAddon}
       />
-      <CreateExtraModal
+      <CreateSizeModal
         open={sizeDialogOpen}
         onOpenChange={setSizeDialogOpen}
         onAdd={handleAddSize}

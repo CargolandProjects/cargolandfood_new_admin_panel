@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useCreateCuisines } from "@/lib/hooks/mutations/useMutateCuisines";
+import { useSession } from "@/lib/providers/SessionProvider";
 
 const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -19,27 +21,34 @@ type CategoryFormValues = z.infer<typeof categorySchema>;
 interface NewCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (name: string) => void;
 }
 
 export function NewCategoryDialog({
   open,
   onOpenChange,
-  onCreate,
 }: NewCategoryDialogProps) {
+  const { mutate, isPending } = useCreateCuisines();
   const { control, handleSubmit, reset } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: { name: "" },
   });
+
+  const session = useSession();
 
   // Reset the form every time the dialog opens
   useEffect(() => {
     if (open) reset({ name: "" });
   }, [open, reset]);
 
-  const onSubmit = (values: CategoryFormValues) => {
-    onCreate(values.name);
-    onOpenChange(false);
+  const onSubmit = (data: CategoryFormValues) => {
+    if (!session?.id) return;
+
+    const payload = { ...data, createdBy: session?.id };
+    mutate(payload, {
+      onSuccess: () => {
+        onOpenChange(false);
+      },
+    });
   };
 
   return (
@@ -68,6 +77,7 @@ export function NewCategoryDialog({
           <div className="mt-6 grid grid-cols-2 gap-4">
             <Button
               type="submit"
+              disabled={isPending}
               className="py-3 h-auto bg-primary font-bold text-white hover:bg-primary/90 duration-200 rounded-lg"
             >
               Create

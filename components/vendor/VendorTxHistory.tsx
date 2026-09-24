@@ -79,9 +79,8 @@ const VendorTxHistory = ({
           <TableRow className="border-b border-gray-100 bg-gray-100">
             <TableHead className="w-12 pl-6">
               <Checkbox
-                checked={
-                  allSelected ? true : someSelected ? "indeterminate" : false
-                }
+                checked={allSelected}
+                indeterminate={someSelected}
                 onCheckedChange={toggleAll}
                 aria-label="Select all"
               />

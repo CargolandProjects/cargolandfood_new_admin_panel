@@ -1,6 +1,7 @@
 import { apiCall } from "../api/client";
 import { DashboardData } from "../api/dashboard";
 import { API_ROUTES } from "../api/endpoints";
+import { CreateMenuFormData } from "../schema/menu";
 
 export type ApiResponse<T> = {
   success: boolean;
@@ -16,6 +17,22 @@ export interface VendorStats {
   totalInactiveVendor: number;
   newlyJoinedVendor: number;
   pendingVendor: number;
+}
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  uploadImageUrl: string;
+  publicUrl: string;
+  categoryId: string;
+  vendorId: string;
+  isMenuSet: boolean;
+  outOfStock: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
 }
 
 interface Address {
@@ -100,6 +117,8 @@ export interface Vendor {
   workingHours: WorkingHours[];
 }
 
+type CreateMenuData = CreateMenuFormData & { createdBy: string };
+
 export type VendorListVendor = Omit<
   Vendor,
   " review" | "address" | "workingHours"
@@ -121,6 +140,11 @@ export type VendorListRes = ApiResponse<{
     total: number;
     totalPages: number;
   };
+}>;
+
+type CreateMenuRes = ApiResponse<{
+  message: string;
+  data: MenuItem;
 }>;
 
 export type GetVendorRes = ApiResponse<Vendor>;
@@ -174,6 +198,20 @@ export const vendor = {
         method: "GET",
       },
     );
+    return res;
+  },
+
+  async createVendorMenu({
+    vendorId,
+    data,
+  }: {
+    vendorId: string;
+    data: CreateMenuData;
+  }) {
+    const res = apiCall<CreateMenuRes>(API_ROUTES.vendor.CreateVendorMenu(vendorId), {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
     return res;
   },
 };

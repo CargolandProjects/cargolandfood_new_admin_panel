@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { addonSchema } from "@/lib/schema/menu";
 import { formatNumber } from "@/lib/utils";
-
-export type AddonFormValues = z.infer<typeof addonSchema>;
+import ImageUploadField from "./ImageUploadField";
+import { UploadedImage } from "@/lib/services/image.service";
+import z from "zod";
+import { AddonFormValues } from "@/lib/schema/menu";
 
 interface CreateAddonDialogProps {
   open: boolean;
@@ -22,7 +21,16 @@ interface CreateAddonDialogProps {
   submitLabel?: string;
 }
 
-export function CreateExtraModal({
+export const addonSchema = z.object({
+  name: z.string().min(1, "Add-on name is required"),
+  price: z.string().min(2, "Price is required"),
+  addonImage: z.string().min(1, "Addon image is required"),
+  publicUrl: z.string().min(1, "Image is required"),
+});
+
+type AddonFormData = z.infer<typeof addonSchema>;
+
+export function CreateAddonModal({
   open,
   onOpenChange,
   onAdd,
@@ -33,24 +41,46 @@ export function CreateExtraModal({
     control,
     handleSubmit,
     reset,
+    setValue,
+    setError,
+    clearErrors,
+    watch,
     formState: { errors },
-  } = useForm<AddonFormValues>({
+  } = useForm<AddonFormData>({
     resolver: zodResolver(addonSchema),
-    defaultValues: { name: "", price: "" },
+    defaultValues: { name: "", price: "", addonImage: "", publicUrl: "" },
   });
+  const publicId = watch("publicUrl");
 
   useEffect(() => {
     if (open) reset({ name: "", price: "" });
   }, [open, reset]);
 
-  const onSubmit = (values: AddonFormValues) => {
+  const onSubmit = (data: AddonFormData) => {
+    const { publicUrl, ...values } = data;
     onAdd(values);
     onOpenChange(false);
   };
 
+  const handleUpload = (image: UploadedImage | undefined) => {
+    setValue("addonImage", image?.url ?? "", {
+      shouldValidate: true,
+    });
+    setValue("publicUrl", image?.publicId ?? "", {
+      shouldValidate: true,
+    });
+  };
+  const handleError = useCallback((message: string | null) => {
+    if (message) {
+      setError("addonImage", { type: "manual", message });
+    } else {
+      clearErrors("addonImage");
+    }
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[400px] px-7! py-6! gap-6">
+      <DialogContent className="max-w-100! px-7! py-6! gap-6">
         <DialogTitle className="text-xl font-bold text-gray-900">
           {title}
         </DialogTitle>
@@ -100,6 +130,33 @@ export function CreateExtraModal({
                   placeholder="₦0"
                   aria-invalid={fieldState.invalid}
                   className="h-10! focus-visible:ring-1! focus-visible:ring-primary! border-none! rounded-[6px]! placeholder:text-xs placeholder:font-medium placeholder:text-neutral-300! bg-gray-100/70!"
+                />
+                {fieldState.invalid && (
+                  <FieldError
+                    errors={[fieldState.error]}
+                    className="form-error"
+                  />
+                )}
+              </Field>
+            )}
+          />
+
+          {/* Upload Image */}
+          <Controller
+            control={control}
+            name="addonImage"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid} className="field">
+                <FieldLabel htmlFor={field.name} className="form-label">
+                  Upload Image
+                </FieldLabel>
+                <ImageUploadField
+                  value={field.value}
+                  onChange={handleUpload}
+                  onBlur={field.onBlur}
+                  onError={handleError}
+                  invalid={fieldState.invalid}
+                  publicId={publicId}
                 />
                 {fieldState.invalid && (
                   <FieldError

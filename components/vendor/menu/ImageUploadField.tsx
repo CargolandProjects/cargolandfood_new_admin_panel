@@ -7,6 +7,7 @@ import { useDeleteImage, useUploadImage } from "@/lib/hooks/mutations/useImage";
 import { cn } from "@/lib/utils";
 import { type UploadedImage } from "@/lib/services/image.service";
 import { toast } from "sonner";
+import { useSession } from "@/lib/providers/SessionProvider";
 
 interface ImageUploadFieldProps {
   value?: string;
@@ -34,11 +35,13 @@ export default function ImageUploadField({
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const { mutate, isPending, error, reset } = useUploadImage();
-  const { mutate: removeFromStorage } = useDeleteImage();
+  const { mutate: removeFromStorage, isPending: isDeleting } = useDeleteImage();
 
   const displayUrl = localPreview ?? value ?? null;
   const errorMessage = validationError ?? error?.message ?? null;
+  const session = useSession();
 
+  const isAction = isPending || isDeleting;
   // Report the merged error up to the parent whenever it changes
   useEffect(() => {
     onError?.(errorMessage);
@@ -53,7 +56,7 @@ export default function ImageUploadField({
   const handleFile = (file: File | undefined) => {
     setValidationError(null);
     reset();
-    if (!file) return;
+    if (!file || !session?.email) return;
 
     if (!ALLOWED.includes(file.type)) {
       setValidationError("Only JPG, PNG and WEBP formats are allowed");
@@ -69,30 +72,35 @@ export default function ImageUploadField({
     const previewUrl = URL.createObjectURL(file);
     setLocalPreview(previewUrl);
 
-    mutate(file, {
-      onSuccess: (image) => {
-        URL.revokeObjectURL(previewUrl);
-        setLocalPreview(null);
-        onChange(image);
+    mutate(
+      { file: file, userEmail: session.email },
+      {
+        onSuccess: (image) => {
+          URL.revokeObjectURL(previewUrl);
+          setLocalPreview(null);
+          onChange(image.data);
+        },
+        onError: () => {
+          URL.revokeObjectURL(previewUrl);
+          setLocalPreview(null);
+          setFileName(null);
+        },
       },
-      onError: () => {
-        URL.revokeObjectURL(previewUrl);
-        setLocalPreview(null);
-        setFileName(null);
-      },
-    });
+    );
   };
-
   const handleRemove = () => {
-    onChange(undefined);
-    setLocalPreview(null);
-    setFileName(null);
-    setValidationError(null);
-    reset();
+    console.log("DELETING_PUBLIC_ID", publicId);
     if (inputRef.current) inputRef.current.value = "";
 
     if (publicId) {
       removeFromStorage(publicId, {
+        onSuccess: () => {
+          onChange(undefined);
+          setLocalPreview(null);
+          setFileName(null);
+          setValidationError(null);
+          reset();
+        },
         onError: () => {
           toast.error("Failed to delete image");
         },
@@ -124,7 +132,7 @@ export default function ImageUploadField({
                 {isPending ? "Please wait" : "Ready to save"}
               </p>
             </div>
-            {isPending ? (
+            {isAction ? (
               <Loader2 className="h-4 w-4 animate-spin text-[#F16622]" />
             ) : (
               <button
@@ -141,7 +149,7 @@ export default function ImageUploadField({
       )}
 
       {!displayUrl && (
-        <div className="px-10 lg:px-[50px] py-8 lg:py-[45px] border border-[#FDE7DA] rounded-sm">
+        <div className="px-10 lg:px-12.5 py-8 lg:py-11.25 border border-[#FDE7DA] rounded-sm">
           <div
             onClick={() => !isPending && inputRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
