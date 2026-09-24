@@ -24,7 +24,7 @@ export default function VendorManagementPage() {
   const router = useRouter();
 
   const {
-    data: vendors,
+    data,
     isFetching: isLoadingVendors,
     refetch,
     isError,
@@ -33,6 +33,8 @@ export default function VendorManagementPage() {
   const { data: stats, isLoading } = useVendorStat();
   const { data: dashboard, isLoading: isDashboardLoading } = useDashboard();
 
+  const vendors = data?.data;
+  const pagination = data?.pagination;
   const totalPages = 5;
 
   // reset to page 1 whenever the search term changes
@@ -97,15 +99,16 @@ export default function VendorManagementPage() {
       <h2 className="my-5 pl-4 text-base font-bold">All Vendors</h2>
 
       <div className="border rounded-[16px]">
+        {/* search & action buttons */}
         <div className="p-4 flex gap-2 max-md:flex-col justify-between md:items-center">
-          <div className="relative w-full md:max-w-[364px]">
+          <div className="relative w-full md:max-w-91">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/60" />
             <input
               type="text"
               placeholder="Search by name, email or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-black/20 rounded-full text-[13px] text-black placeholder:text-black/40 focus:outline-none focus:border-black/40 shadow-sm"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-black/20 rounded-full text-[13px] text-black placeholder:text-black/40 focus:outline-none focus:border-black/40"
             />
           </div>
 

@@ -27,7 +27,7 @@ export const useVendors = (
   return useQuery({
     queryKey: ["vendor-list", { page, limit, search, status, zoneId }],
     queryFn: () => vendor.getVendors(page, limit, search, status, zoneId),
-    select: (res) => res.data.data,
+    select: (res) => res.data,
     placeholderData: (prev) => prev,
   });
 };
@@ -37,6 +37,15 @@ export const useVendor = (id: string) => {
     queryKey: ["vendor", id],
     queryFn: () => vendor.getVendor(id),
     select: (res) => res.data,
+    enabled: Boolean(id),
+  });
+};
+
+export const useVendorMenu = (id: string) => {
+  return useQuery({
+    queryKey: ["vendor-menu", id],
+    queryFn: () => vendor.getVendorMenu(id),
+    select: (res) => res.data,  
     enabled: Boolean(id),
   });
 };
