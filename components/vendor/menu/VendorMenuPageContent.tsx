@@ -79,7 +79,7 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
   };
 
   return (
-    <div className="space-y-4 pb-10">
+    <div className="space-y-4 md:space-y-6 pb-10">
       {/* Top bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -161,7 +161,7 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
             isLoading={isLoading}
             isSuccess={isSuccess}
             isError={isError}
-            onRetry={() => refetch()}
+            onRetry={refetch}
             onAction={handleAction}
           />
 

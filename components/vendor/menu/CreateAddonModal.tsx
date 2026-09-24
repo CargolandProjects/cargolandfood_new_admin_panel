@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { formatNumber } from "@/lib/utils";
 import ImageUploadField from "./ImageUploadField";
 import { UploadedImage } from "@/lib/services/image.service";
 import z from "zod";
-import { AddonFormValues } from "@/lib/schema/menu";
+import { AddonFormValues, addonSchema } from "@/lib/schema/menu";
 
 interface CreateAddonDialogProps {
   open: boolean;
@@ -21,15 +21,6 @@ interface CreateAddonDialogProps {
   submitLabel?: string;
 }
 
-export const addonSchema = z.object({
-  name: z.string().min(1, "Add-on name is required"),
-  price: z.string().min(2, "Price is required"),
-  addonImage: z.string().optional(),
-  publicUrl: z.string().optional(),
-});
-
-type AddonFormData = z.infer<typeof addonSchema>;
-
 export function CreateAddonModal({
   open,
   onOpenChange,
@@ -37,28 +28,19 @@ export function CreateAddonModal({
   title = "Create Add-on",
   submitLabel = "Add",
 }: CreateAddonDialogProps) {
-  const {
-    control,
-    handleSubmit,
-    reset,
-    setValue,
-    setError,
-    clearErrors,
-    watch,
-    formState: { errors },
-  } = useForm<AddonFormData>({
-    resolver: zodResolver(addonSchema),
-    defaultValues: { name: "", price: "", addonImage: "", publicUrl: "" },
-  });
-  const publicId = watch("publicUrl");
+  const [publicId, setPublicId] = useState("");
+  const { control, handleSubmit, reset, setValue, setError, clearErrors } =
+    useForm<AddonFormValues>({
+      resolver: zodResolver(addonSchema),
+      defaultValues: { name: "", price: "", addonImage: "" },
+    });
 
   useEffect(() => {
     if (open) reset({ name: "", price: "" });
   }, [open, reset]);
 
-  const onSubmit = (data: AddonFormData) => {
-    const { publicUrl, ...values } = data;
-    onAdd(values);
+  const onSubmit = (data: AddonFormValues) => {
+    onAdd(data);
     onOpenChange(false);
   };
 
@@ -66,9 +48,7 @@ export function CreateAddonModal({
     setValue("addonImage", image?.url ?? "", {
       shouldValidate: true,
     });
-    setValue("publicUrl", image?.publicId ?? "", {
-      shouldValidate: true,
-    });
+    setPublicId(image?.publicId || "");
   };
   const handleError = useCallback((message: string | null) => {
     if (message) {
