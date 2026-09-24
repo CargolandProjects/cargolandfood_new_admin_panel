@@ -100,7 +100,7 @@ export default function CreateMenuPageContent({
   const publicId = watch("publicUrl");
 
   const onSubmit = async (data: CreateMenuFormData) => {
-    console.log(data);
+    // console.log(data);
 
     if (!session) return;
 

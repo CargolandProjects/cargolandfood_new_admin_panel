@@ -61,18 +61,20 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
 
         <div className="flex items-center gap-3">
           <Button
+            onClick={() => router.push(`/vendor-management/${vendorId}/menu`)}
             variant="outline"
             className="p-2.5 h-auto text-base font-medium leading-5 rounded-md border-2 border-gray-100"
           >
-            <Link href={`/vendor-management/${vendorId}/menu`}>View Menu</Link>
+            View Menu
           </Button>
           <Button
+            onClick={() =>
+              router.push(`/vendor-management/${vendorId}/menu/create-menu`)
+            }
             size="sm"
             className="p-2.5 h-auto text-base font-medium leading-5 rounded-md bg-primary"
           >
-            <Link href={`/vendor-management/${vendorId}/menu/create-menu`}>
-              Create Menu
-            </Link>
+            Create Menu
           </Button>
         </div>
       </div>
