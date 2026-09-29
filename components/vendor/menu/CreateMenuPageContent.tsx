@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { ArrowLeft, Plus, PlusCircle, Trash2, X } from "lucide-react";
+import { ArrowLeft, PlusCircle, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,6 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -36,31 +35,35 @@ import {
 import { useIsMutating } from "@tanstack/react-query";
 import { UploadedImage } from "@/lib/services/image.service";
 import { formatNumber } from "@/lib/utils";
-import { useCreateVendorMenu } from "@/lib/hooks/mutations/useVendorMenu";
+import {
+  useCreateVendorMenu,
+  useEditVendorMenu,
+} from "@/lib/hooks/mutations/useVendorMenu";
 import { toast } from "sonner";
 import { CreateAddonModal } from "./CreateAddonModal";
 import { useSession } from "@/lib/providers/SessionProvider";
 import { useGetCuisines } from "@/lib/hooks/queries/useCuisines";
+import { useVendorMenuItem } from "@/lib/hooks/queries/useVendor";
+import LoadingOverlay from "@/components/LoadingOverlay";
 
-const DEFAULT_CATEGORIES = [
-  "Restaurant",
-  "Groceries",
-  "Market",
-  "Food Ingredients",
-];
-
-export default function CreateMenuPageContent({
-  vendorId,
-}: {
-  vendorId: string;
-}) {
+const CreateMenu = ({ vendorId }: { vendorId: string }) => {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [addonDialogOpen, setAddonDialogOpen] = useState(false);
   const [sizeDialogOpen, setSizeDialogOpen] = useState(false);
   const { data: cuisines, isFetching: isCuisineLoading } = useGetCuisines();
   const { mutate: createMenu, isPending: isCreating } = useCreateVendorMenu();
+  const { mutate: editMenu, isPending: isEditing } = useEditVendorMenu();
+
+  const searchParams = useSearchParams();
+  const action = searchParams.get("action");
+  const menuId = searchParams.get("menuId");
+
+  const { data: menu, isLoading } = useVendorMenuItem(vendorId, menuId || "");
 
   const isUploading = useIsMutating({ mutationKey: ["upload-image"] }) > 0;
+  const isDeleting = useIsMutating({ mutationKey: ["delete-image"] }) > 0;
+  const isImageAction = isUploading || isDeleting;
+
   const router = useRouter();
   const session = useSession();
 
@@ -87,10 +90,33 @@ export default function CreateMenuPageContent({
     },
   });
 
+  // prefill the form fields with menu details if on Edit
+  useEffect(() => {
+    if (!menu || action !== "Edit") return;
+
+    const addons = menu.addons?.map((a) => {
+      return { name: a.name, price: a.price, addonImage: a.addonImage || "" };
+    });
+    const sizes = menu.sizes?.map((s) => {
+      return { name: s.name, price: s.price, size: s.size };
+    });
+
+    reset({
+      addons,
+      categoryId: menu.category?.name,
+      description: menu.description,
+      name: menu.name,
+      price: menu.price,
+      publicUrl: menu.publicUrl,
+      uploadImageUrl: menu.uploadImageUrl,
+      sizes,
+    });
+  }, [menu, action]);
+
   //  to log form errors
-  // useEffect(() => {
-  //   console.log("FORM_STATE: ", formState.errors);
-  // }, [formState.errors]);
+  useEffect(() => {
+    console.log("FORM_STATE: ", formState.errors);
+  }, [formState.errors]);
 
   const addonsArray = useFieldArray({ control, name: "addons" });
   const sizesArray = useFieldArray({ control, name: "sizes" });
@@ -99,9 +125,9 @@ export default function CreateMenuPageContent({
   const watchedSizes = watch("sizes") || [];
   const publicId = watch("publicUrl");
 
-  const onSubmit = async (data: CreateMenuFormData) => {
-    // console.log(data);
+  const isPending = isCreating || isEditing;
 
+  const onSubmit = async (data: CreateMenuFormData) => {
     if (!session) return;
 
     const categoryId =
@@ -117,14 +143,31 @@ export default function CreateMenuPageContent({
       return;
     }
 
-    createMenu(
-      { vendorId, data: payload },
-      {
-        onSuccess: () => {
-          reset();
+    if (action === "Edit") {
+      if (!menuId) return;
+      const editPayload = {
+        ...payload,
+        vendorId,
+        outOfStock: menu?.outOfStock,
+      };
+      console.log("EDIT MENU: ", editPayload);
+      editMenu(
+        { vendorId, menuId, data: editPayload },
+        {
+          onSuccess: () => {
+            router.push(`/vendor-management/${vendorId}/menu/`);
+          },
         },
-      },
-    );
+      );
+    } else
+      createMenu(
+        { vendorId, data: payload },
+        {
+          onSuccess: () => {
+            reset();
+          },
+        },
+      );
   };
 
   const handleError = useCallback((message: string | null) => {
@@ -153,318 +196,338 @@ export default function CreateMenuPageContent({
   };
 
   return (
-    <div className="mx-auto max-w-[1100px] pb-10">
-      {/* Top bar */}
-      <div className="mb-6 flex items-center gap-6">
-        <Button
-          variant="outline"
-          onClick={() => router.back()}
-          className="p-2 gap-1 border-gray-200 text-neutral-500 text-xs rounded-md"
-        >
-          <ArrowLeft className="size-4" />
-          Back
-        </Button>
-        <h1 className="text-base font-bold">Create Menu</h1>
-      </div>
+    <>
+      <LoadingOverlay loading={isLoading} />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        <FieldSet className="p-4">
-          <FieldLegend className="pt-4 text-base font-bold">
-            General information
-          </FieldLegend>
+      {!isLoading && (
+        <div className="mx-auto max-w-275 pb-10">
+          {/* Top bar */}
+          <div className="mb-6 flex items-center gap-6">
+            <Button
+              variant="outline"
+              onClick={() => router.back()}
+              className="p-2 gap-1 border-gray-200 text-neutral-500 text-xs rounded-md"
+            >
+              <ArrowLeft className="size-4" />
+              Back
+            </Button>
+            <h1 className="text-base font-bold">Create Menu</h1>
+          </div>
 
-          <FieldGroup className="grid md:grid-cols-2 gap-6">
-            {/* Category */}
-            <Controller
-              name="categoryId"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid} className="field">
-                  <div className="flex items-center justify-between">
-                    <FieldLabel htmlFor={field.name} className="form-label">
-                      Category
-                    </FieldLabel>
-                    <button
-                      type="button"
-                      onClick={() => setCategoryDialogOpen(true)}
-                      className="text-xs font-medium text-primary hover:underline underline-offset-2"
-                    >
-                      + New
-                    </button>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <FieldSet className="p-4">
+              <FieldLegend className="pt-4 text-base font-bold">
+                General information
+              </FieldLegend>
+
+              <FieldGroup className="grid md:grid-cols-2 gap-6">
+                {/* Category */}
+                <Controller
+                  name="categoryId"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid} className="field">
+                      <div className="flex items-center justify-between">
+                        <FieldLabel htmlFor={field.name} className="form-label">
+                          Category
+                        </FieldLabel>
+                        <button
+                          type="button"
+                          onClick={() => setCategoryDialogOpen(true)}
+                          className="text-xs font-medium text-primary hover:underline underline-offset-2"
+                        >
+                          + New
+                        </button>
+                      </div>
+
+                      <Select
+                        name={field.name}
+                        value={field.value ?? ""}
+                        onValueChange={field.onChange ?? ""}
+                        disabled={isCuisineLoading}
+                      >
+                        <SelectTrigger
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          className="form-input "
+                        >
+                          <SelectValue
+                            placeholder={
+                              isCuisineLoading
+                                ? "loading..."
+                                : "Select a category"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(cuisines || []).map((cuisine) => (
+                            <SelectItem key={cuisine.id} value={cuisine.name}>
+                              {cuisine.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && (
+                        <FieldError
+                          errors={[fieldState.error]}
+                          className="form-error"
+                        />
+                      )}
+                    </Field>
+                  )}
+                />
+
+                {/* Name */}
+                <Controller
+                  control={control}
+                  name="name"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid} className="field">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        Name
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder="e.g Fish biscuits"
+                        aria-invalid={fieldState.invalid}
+                        className="form-input"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError
+                          errors={[fieldState.error]}
+                          className="form-error"
+                        />
+                      )}
+                    </Field>
+                  )}
+                />
+
+                {/* Description */}
+                <Controller
+                  control={control}
+                  name="description"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid} className="field">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        Description
+                      </FieldLabel>
+
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder="Select a e.g Fish fried with flour"
+                        aria-invalid={fieldState.invalid}
+                        className="form-input"
+                      />
+
+                      {fieldState.invalid && (
+                        <FieldError
+                          errors={[fieldState.error]}
+                          className="form-error"
+                        />
+                      )}
+                    </Field>
+                  )}
+                />
+
+                {/* Price */}
+                <Controller
+                  control={control}
+                  name="price"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid} className="field">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        Price
+                      </FieldLabel>
+
+                      <Input
+                        {...field}
+                        id={field.name}
+                        value={formatNumber(field.value)}
+                        onChange={(e) =>
+                          field.onChange(e.target.value.replace(/\D/g, ""))
+                        }
+                        placeholder="₦0"
+                        aria-invalid={fieldState.invalid}
+                        className="form-input"
+                      />
+
+                      {fieldState.invalid && (
+                        <FieldError
+                          errors={[fieldState.error]}
+                          className="form-error"
+                        />
+                      )}
+                    </Field>
+                  )}
+                />
+
+                {/* Upload Image */}
+                <Controller
+                  control={control}
+                  name="uploadImageUrl"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid} className="field">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        Upload Image
+                      </FieldLabel>
+                      <ImageUploadField
+                        value={field.value}
+                        onChange={handleUpload}
+                        onBlur={field.onBlur}
+                        onError={handleError}
+                        invalid={fieldState.invalid}
+                        publicId={publicId}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError
+                          errors={[fieldState.error]}
+                          className="form-error"
+                        />
+                      )}
+                    </Field>
+                  )}
+                />
+
+                {/* Right column */}
+                <div className="space-y-6">
+                  {/* Create add-ons */}
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium">Create add-ons</h3>
+                      <button
+                        type="button"
+                        onClick={() => setAddonDialogOpen(true)}
+                        className="text-primary hover:opacity-80"
+                        aria-label="Add add-on"
+                      >
+                        <PlusCircle className="size-5" strokeWidth={2.5} />
+                      </button>
+                    </div>
+
+                    {watchedAddons.length > 0 && (
+                      <ul className="mt-3 space-y-1.5">
+                        {watchedAddons.map((addon, index) => (
+                          <li
+                            key={addonsArray.fields[index]?.id}
+                            className="p-2.5 flex items-center justify-between text-xs font-medium border-2 border-gray-100 rounded-sm"
+                          >
+                            <span className="text-gray-700">{addon.name}</span>
+                            <div className="flex gap-1 items-center">
+                              <span className="text-gray-500">
+                                ₦{formatNumber(addon.price)}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => addonsArray.remove(index)}
+                                className="text-gray-400 hover:text-red-500"
+                                aria-label={`Remove ${addon.name}`}
+                              >
+                                <X className="size-4 text-neutral-300" />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
 
-                  <Select
-                    name={field.name}
-                    value={field.value ?? ""}
-                    onValueChange={field.onChange ?? ""}
-                    disabled={isCuisineLoading}
-                  >
-                    <SelectTrigger
-                      id={field.name}
-                      aria-invalid={fieldState.invalid}
-                      className="form-input "
-                    >
-                      <SelectValue
-                        placeholder={
-                          isCuisineLoading ? "loading..." : "Select a category"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(cuisines || []).map((cuisine) => (
-                        <SelectItem key={cuisine.id} value={cuisine.name}>
-                          {cuisine.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="form-error"
-                    />
-                  )}
-                </Field>
-              )}
-            />
-
-            {/* Name */}
-            <Controller
-              control={control}
-              name="name"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid} className="field">
-                  <FieldLabel htmlFor={field.name} className="form-label">
-                    Name
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id={field.name}
-                    placeholder="e.g Fish biscuits"
-                    aria-invalid={fieldState.invalid}
-                    className="form-input"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="form-error"
-                    />
-                  )}
-                </Field>
-              )}
-            />
-
-            {/* Description */}
-            <Controller
-              control={control}
-              name="description"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid} className="field">
-                  <FieldLabel htmlFor={field.name} className="form-label">
-                    Description
-                  </FieldLabel>
-
-                  <Input
-                    {...field}
-                    id={field.name}
-                    placeholder="Select a e.g Fish fried with flour"
-                    aria-invalid={fieldState.invalid}
-                    className="form-input"
-                  />
-
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="form-error"
-                    />
-                  )}
-                </Field>
-              )}
-            />
-
-            {/* Price */}
-            <Controller
-              control={control}
-              name="price"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid} className="field">
-                  <FieldLabel htmlFor={field.name} className="form-label">
-                    Price
-                  </FieldLabel>
-
-                  <Input
-                    {...field}
-                    id={field.name}
-                    value={formatNumber(field.value)}
-                    onChange={(e) =>
-                      field.onChange(e.target.value.replace(/\D/g, ""))
-                    }
-                    placeholder="₦0"
-                    aria-invalid={fieldState.invalid}
-                    className="form-input"
-                  />
-
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="form-error"
-                    />
-                  )}
-                </Field>
-              )}
-            />
-
-            {/* Upload Image */}
-            <Controller
-              control={control}
-              name="uploadImageUrl"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid} className="field">
-                  <FieldLabel htmlFor={field.name} className="form-label">
-                    Upload Image
-                  </FieldLabel>
-                  <ImageUploadField
-                    value={field.value}
-                    onChange={handleUpload}
-                    onBlur={field.onBlur}
-                    onError={handleError}
-                    invalid={fieldState.invalid}
-                    publicId={publicId}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="form-error"
-                    />
-                  )}
-                </Field>
-              )}
-            />
-
-            {/* Right column */}
-            <div className="space-y-6">
-              {/* Create add-ons */}
-              <div>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium">Create add-ons</h3>
-                  <button
-                    type="button"
-                    onClick={() => setAddonDialogOpen(true)}
-                    className="text-primary hover:opacity-80"
-                    aria-label="Add add-on"
-                  >
-                    <PlusCircle className="size-5" strokeWidth={2.5} />
-                  </button>
-                </div>
-
-                {watchedAddons.length > 0 && (
-                  <ul className="mt-3 space-y-1.5">
-                    {watchedAddons.map((addon, index) => (
-                      <li
-                        key={addonsArray.fields[index]?.id}
-                        className="p-2.5 flex items-center justify-between text-xs font-medium border-2 border-gray-100 rounded-sm"
+                  {/* Sizes */}
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium">Sizes</h3>
+                      <button
+                        type="button"
+                        onClick={() => setSizeDialogOpen(true)}
+                        className="text-primary  hover:opacity-80"
+                        aria-label="Add size"
                       >
-                        <span className="text-gray-700">{addon.name}</span>
-                        <div className="flex gap-1 items-center">
-                          <span className="text-gray-500">
-                            ₦{formatNumber(addon.price)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => addonsArray.remove(index)}
-                            className="text-gray-400 hover:text-red-500"
-                            aria-label={`Remove ${addon.name}`}
-                          >
-                            <X className="size-4 text-neutral-300" />
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                        <PlusCircle className="size-5" strokeWidth={2.5} />
+                      </button>
+                    </div>
 
-              {/* Sizes */}
-              <div>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium">Sizes</h3>
-                  <button
-                    type="button"
-                    onClick={() => setSizeDialogOpen(true)}
-                    className="text-primary  hover:opacity-80"
-                    aria-label="Add size"
-                  >
-                    <PlusCircle className="size-5" strokeWidth={2.5} />
-                  </button>
+                    {watchedSizes.length > 0 && (
+                      <ul className="mt-3 space-y-1.5">
+                        {watchedSizes.map((size, index) => (
+                          <li
+                            key={sizesArray.fields[index]?.id}
+                            className="p-2.5 flex items-center justify-between text-xs font-medium border-2 border-gray-100 rounded-sm"
+                          >
+                            <span className="text-gray-700">{size.name}</span>
+                            <div className="flex gap-1 items-center">
+                              <span className="text-gray-500">
+                                ₦{formatNumber(size.price)}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => sizesArray.remove(index)}
+                                className="text-gray-400 hover:text-red-500"
+                                aria-label={`Remove ${size.name}`}
+                              >
+                                <X className="size-4 text-neutral-300" />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
+              </FieldGroup>
 
-                {watchedSizes.length > 0 && (
-                  <ul className="mt-3 space-y-1.5">
-                    {watchedSizes.map((size, index) => (
-                      <li
-                        key={sizesArray.fields[index]?.id}
-                        className="p-2.5 flex items-center justify-between text-xs font-medium border-2 border-gray-100 rounded-sm"
-                      >
-                        <span className="text-gray-700">{size.name}</span>
-                        <div className="flex gap-1 items-center">
-                          <span className="text-gray-500">
-                            ₦{formatNumber(size.price)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => sizesArray.remove(index)}
-                            className="text-gray-400 hover:text-red-500"
-                            aria-label={`Remove ${size.name}`}
-                          >
-                            <X className="size-4 text-neutral-300" />
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+              {/* Actions */}
+              <div className="flex items-center justify-between pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => reset()}
+                  className="px-10 py-2.5 h-auto border-gray-200 text-sm font-medium rounded-sm "
+                >
+                  Reset
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isPending || isImageAction}
+                  className="px-10 py-2.5 h-auto text-sm font-medium rounded-sm bg-primary/15 text-[#8B4513] hover:bg-[#fcd5be]"
+                >
+                  {isPending ? "Saving..." : "Save"}
+                </Button>
               </div>
-            </div>
-          </FieldGroup>
+            </FieldSet>
+          </form>
 
-          {/* Actions */}
-          <div className="flex items-center justify-between pt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => reset()}
-              className="px-10 py-2.5 h-auto border-gray-200 text-sm font-medium rounded-sm "
-            >
-              Reset
-            </Button>
-            <Button
-              type="submit"
-              disabled={isUploading}
-              className="px-10 py-2.5 h-auto text-sm font-medium rounded-sm bg-primary/15 text-[#8B4513] hover:bg-[#fcd5be]"
-            >
-              {isUploading ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </FieldSet>
-      </form>
+          {/* Modals */}
+          <NewCategoryDialog
+            open={categoryDialogOpen}
+            onOpenChange={setCategoryDialogOpen}
+          />
+          <CreateAddonModal
+            open={addonDialogOpen}
+            onOpenChange={setAddonDialogOpen}
+            onAdd={handleAddAddon}
+          />
+          <CreateSizeModal
+            open={sizeDialogOpen}
+            onOpenChange={setSizeDialogOpen}
+            onAdd={handleAddSize}
+            title="Add Size"
+            submitLabel="Add"
+          />
+        </div>
+      )}
+    </>
+  );
+};
 
-      {/* Modals */}
-      <NewCategoryDialog
-        open={categoryDialogOpen}
-        onOpenChange={setCategoryDialogOpen}
-      />
-      <CreateAddonModal
-        open={addonDialogOpen}
-        onOpenChange={setAddonDialogOpen}
-        onAdd={handleAddAddon}
-      />
-      <CreateSizeModal
-        open={sizeDialogOpen}
-        onOpenChange={setSizeDialogOpen}
-        onAdd={handleAddSize}
-        title="Add Size"
-        submitLabel="Add"
-      />
-    </div>
+export default function CreateMenuPageContent({
+  vendorId,
+}: {
+  vendorId: string;
+}) {
+  return (
+    <Suspense>
+      <CreateMenu vendorId={vendorId} />
+    </Suspense>
   );
 }

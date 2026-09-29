@@ -29,6 +29,7 @@ export type MenuAction = "view" | "edit" | "delete";
 interface MenuTableProps {
   items: MenuItem[];
   isLoading?: boolean;
+  deletingId?: string;
   isSuccess?: boolean;
   isError?: boolean;
   onRetry: () => void;
@@ -40,6 +41,7 @@ const getMenuCode = (id: string) => `CLF-${id.slice(-4).toUpperCase()}`;
 export default function MenuTable({
   items,
   isLoading,
+  deletingId,
   isSuccess,
   isError,
   onRetry,
@@ -142,7 +144,7 @@ export default function MenuTable({
               <TableRow
                 key={item.id}
                 data-state={isSelected ? "selected" : undefined}
-                className="border-b border-gray-50 align-top hover:bg-gray-50/60"
+                className={`${deletingId === item.id ? "animate-pulse duration-200" : ""} border-b border-gray-50 align-top hover:bg-gray-50/60`}
               >
                 <TableCell
                   className="pl-6 pt-5"

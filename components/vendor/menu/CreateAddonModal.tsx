@@ -12,6 +12,7 @@ import ImageUploadField from "./ImageUploadField";
 import { UploadedImage } from "@/lib/services/image.service";
 import z from "zod";
 import { AddonFormValues, addonSchema } from "@/lib/schema/menu";
+import { useIsMutating } from "@tanstack/react-query";
 
 interface CreateAddonDialogProps {
   open: boolean;
@@ -34,6 +35,10 @@ export function CreateAddonModal({
       resolver: zodResolver(addonSchema),
       defaultValues: { name: "", price: "", addonImage: "" },
     });
+
+  const isUploading = useIsMutating({ mutationKey: ["upload-image"] }) > 0;
+  const isDeleting = useIsMutating({ mutationKey: ["delete-image"] }) > 0;
+  const isImageAction = isUploading || isDeleting;
 
   useEffect(() => {
     if (open) reset({ name: "", price: "" });
@@ -151,6 +156,7 @@ export function CreateAddonModal({
           <div className="grid grid-cols-2 gap-3 pt-1">
             <Button
               type="submit"
+              disabled={isImageAction}
               className="py-3 h-auto bg-primary font-bold text-white hover:bg-primary/90 duration-200 rounded-lg"
             >
               {submitLabel}

@@ -80,7 +80,7 @@ export function NewCategoryDialog({
               disabled={isPending}
               className="py-3 h-auto bg-primary font-bold text-white hover:bg-primary/90 duration-200 rounded-lg"
             >
-              Create
+              {isPending ? "Creating..." : "Create"}
             </Button>
             <Button
               type="button"
