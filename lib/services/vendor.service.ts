@@ -33,6 +33,7 @@ export interface MenuItemAddon {
 export interface MenuItemSize {
   id: string;
   name: string;
+  size: string;
   price: string;
   sizeImage?: string | null;
   menuId: string;
@@ -193,6 +194,11 @@ type VendorMenu = ApiResponse<{
   pagination: Pagination;
 }>;
 
+type VendorMenuItem = ApiResponse<{
+  message: string;
+  data: MenuItem;
+}>;
+
 export const vendor = {
   async getDashboard() {
     const res = await apiCall<ApiResponse<DashboardData>>(
@@ -245,6 +251,13 @@ export const vendor = {
     return res;
   },
 
+  async getVendorMenu(vendorId: string) {
+    const res = apiCall<VendorMenu>(API_ROUTES.vendor.getVendorMenu(vendorId), {
+      method: "GET",
+    });
+    return res;
+  },
+
   async createVendorMenu({
     vendorId,
     data,
@@ -262,10 +275,48 @@ export const vendor = {
     return res;
   },
 
-  async getVendorMenu(vendorId: string) {
-    const res = apiCall<VendorMenu>(API_ROUTES.vendor.getVendorMenu(vendorId), {
-      method: "GET",
-    });
+  async editVendorMenu({
+    vendorId,
+    menuId,
+    data,
+  }: {
+    vendorId: string;
+    menuId: string;
+    data: CreateMenuData;
+  }) {
+    const res = apiCall<CreateMenuRes>(
+      API_ROUTES.vendor.editVendorMenu(vendorId, menuId),
+      {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      },
+    );
+    return res;
+  },
+
+  async getVendorMenuItem(vendorId: string, menuId: string) {
+    const res = apiCall<VendorMenuItem>(
+      API_ROUTES.vendor.getVendorMenuItem(vendorId, menuId),
+      {
+        method: "GET",
+      },
+    );
+    return res;
+  },
+
+  async deleteMenuItem({
+    vendorId,
+    menuId,
+  }: {
+    vendorId: string;
+    menuId: string;
+  }) {
+    const res = apiCall<VendorMenuItem>(
+      API_ROUTES.vendor.deleteVendorMenuItem(vendorId, menuId),
+      {
+        method: "DELETE",
+      },
+    );
     return res;
   },
 };

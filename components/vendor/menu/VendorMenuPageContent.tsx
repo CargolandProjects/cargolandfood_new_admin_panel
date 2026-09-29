@@ -17,6 +17,7 @@ import Pagination from "@/components/vendor/Pagination";
 import MenuTabs, { type MenuTab } from "@/components/vendor/menu/MenuTabs";
 import MenuTable, { type MenuAction } from "@/components/vendor/menu/MenuTable";
 import { useVendorMenu } from "@/lib/hooks/queries/useVendor";
+import { useDeleteMenuItem } from "@/lib/hooks/mutations/useVendorMenu";
 
 export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [deletingId, setDeletingId] = useState("");
 
   const { data, isLoading, isError, isSuccess, refetch } = useVendorMenu(
     vendorId,
@@ -32,6 +34,7 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
     // searchQuery || undefined,
     // activeTab === "all" ? undefined : activeTab,
   );
+  const { mutate: deleteMenu } = useDeleteMenuItem();
 
   const items = data?.data ?? [];
   const pagination = data?.pagination;
@@ -67,19 +70,33 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
     ];
   }, [items]);
 
-  const handleAction = (action: MenuAction, id: string) => {
+  const handleAction = (action: MenuAction, menuId?: string) => {
     if (action === "view") {
       router.push(`/vendor-management/${vendorId}/menu/create-menu`);
-    } else if (action === "edit") {
-      router.push(`/vendor-management/${vendorId}/menu/create-menu/`);
-    } else if (action === "delete") {
-      // TODO: wire delete mutation + confirm dialog
-      console.log("delete", id);
+    }
+    if (action === "edit") {
+      if (!menuId) return;
+      router.push(
+        `/vendor-management/${vendorId}/menu/create-menu?action=Edit&menuId=${menuId}`,
+      );
+    }
+
+    if (action === "delete") {
+      if (!menuId) return;
+      setDeletingId(menuId);
+      deleteMenu(
+        { vendorId, menuId },
+        {
+          onSettled: () => {
+            setDeletingId("");
+          },
+        },
+      );
     }
   };
 
   return (
-    <div className="space-y-4 pb-10">
+    <div className="space-y-4 md:space-y-6 pb-10">
       {/* Top bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -159,9 +176,10 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
           <MenuTable
             items={filteredItems}
             isLoading={isLoading}
+            deletingId={deletingId}
             isSuccess={isSuccess}
             isError={isError}
-            onRetry={() => refetch()}
+            onRetry={refetch}
             onAction={handleAction}
           />
 

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export const useUploadImage = () => {
   return useMutation({
+    mutationKey: ["upload-image"],
     mutationFn: image.uploadImageToCloudinary,
     onSuccess: () => toast.success("Image upload successful"),
     onError: () => toast.error("Image upload failed"),
@@ -12,7 +13,7 @@ export const useUploadImage = () => {
 
 export const useDeleteImage = () => {
   return useMutation({
-    mutationKey: ["upload-image"],
+    mutationKey: ["delete-image"],
     mutationFn: image.deleteImageFromStorage,
     onSuccess: () => toast.success("Image deleted successful"),
     onError: () => toast.error("failed to delete image"),

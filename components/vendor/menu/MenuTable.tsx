@@ -22,12 +22,14 @@ import {
 import { cn, formatNumber } from "@/lib/utils";
 import type { MenuItem } from "@/lib/services/vendor.service";
 import MenuRowSkeleton from "./MenuRowSkeleton";
+import Image from "next/image";
 
 export type MenuAction = "view" | "edit" | "delete";
 
 interface MenuTableProps {
   items: MenuItem[];
   isLoading?: boolean;
+  deletingId?: string;
   isSuccess?: boolean;
   isError?: boolean;
   onRetry: () => void;
@@ -39,6 +41,7 @@ const getMenuCode = (id: string) => `CLF-${id.slice(-4).toUpperCase()}`;
 export default function MenuTable({
   items,
   isLoading,
+  deletingId,
   isSuccess,
   isError,
   onRetry,
@@ -141,7 +144,7 @@ export default function MenuTable({
               <TableRow
                 key={item.id}
                 data-state={isSelected ? "selected" : undefined}
-                className="border-b border-gray-50 align-top hover:bg-gray-50/60"
+                className={`${deletingId === item.id ? "animate-pulse duration-200" : ""} border-b border-gray-50 align-top hover:bg-gray-50/60`}
               >
                 <TableCell
                   className="pl-6 pt-5"
@@ -153,16 +156,17 @@ export default function MenuTable({
                     aria-label={`Select ${item.name}`}
                   />
                 </TableCell>
-
-                {/* Name */}
+                {/* image/name */}
                 <TableCell className="py-4">
                   <div className="flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.uploadImageUrl}
-                      alt={item.name}
-                      className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                    />
+                    <div className="relative size-12">
+                      <Image
+                        src={item.uploadImageUrl}
+                        alt={item.name}
+                        className="size-full rounded-lg object-cover"
+                        fill
+                      />
+                    </div>
                     <div className="min-w-0 leading-tight">
                       <p className="truncate text-sm font-semibold text-gray-900">
                         {item.name}
@@ -173,32 +177,32 @@ export default function MenuTable({
                     </div>
                   </div>
                 </TableCell>
-
                 {/* Category badge */}
                 <TableCell className="py-4">
-                  <span className="inline-flex items-center rounded-md bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700">
+                  <span className="inline-flex items-center px-1 py-0.5 text-xs font-medium text-[#144D68] rounded-[4px] bg-[#DCEFF7]">
                     {item.category?.name ?? "—"}
                   </span>
                 </TableCell>
-
                 {/* Description */}
+                {/* if ever line-clamp doesn't work, add whitespace-normal it likely inhenrited no-wrap from the parent*/}
                 <TableCell className="max-w-55 py-4">
-                  <p className="line-clamp-2 text-xs text-gray-500">
+                  <p className="line-clamp-2 text-xs whitespace-normal truncate font-medium text-gray-500">
                     {item.description || "—"}
                   </p>
                 </TableCell>
-
                 {/* Price */}
                 <TableCell className="py-4 text-sm font-semibold text-gray-900">
                   ₦{formatNumber(item.price)}
                 </TableCell>
-
                 {/* Add-ons */}
                 <TableCell className="py-4">
                   {addons.length > 0 ? (
-                    <ul className="space-y-0.5">
+                    <ul className="space-y-1">
                       {addons.map((addon) => (
-                        <li key={addon.id} className="text-xs text-gray-600">
+                        <li
+                          key={addon.id}
+                          className="text-[10px] font-medium px-1 py-0.5 w-fit rounded-[4px] bg-gray-100 text-gray-600"
+                        >
                           {addon.name}
                         </li>
                       ))}
@@ -207,25 +211,24 @@ export default function MenuTable({
                     <span className="text-xs text-gray-400">—</span>
                   )}
                 </TableCell>
-
                 {/* Sizes */}
                 <TableCell className="py-4">
-                  {sizes.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
+                  {sizes.length === 0 && (
+                    <span className="text-xs text-gray-400">—</span>
+                  )}
+                  {sizes.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
                       {sizes.map((size) => (
                         <span
                           key={size.id}
-                          className="inline-flex items-center rounded-md bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-600"
+                          className="inline-flex items-center px-2.5 py-0.5 text-[10px] font-medium text-rose-600 bg-rose-50 rounded-sm"
                         >
                           {size.name}
                         </span>
                       ))}
                     </div>
-                  ) : (
-                    <span className="text-xs text-gray-400">—</span>
                   )}
                 </TableCell>
-
                 {/* Actions */}
                 <TableCell
                   className="pr-6 pt-5 text-right"

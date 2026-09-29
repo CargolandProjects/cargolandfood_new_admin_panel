@@ -45,7 +45,16 @@ export const useVendorMenu = (id: string) => {
   return useQuery({
     queryKey: ["vendor-menu", id],
     queryFn: () => vendor.getVendorMenu(id),
-    select: (res) => res.data,  
-    enabled: Boolean(id),
+    select: (res) => res.data,
+    enabled: !!id,
+  });
+};
+
+export const useVendorMenuItem = (vendorId: string, menuId: string) => {
+  return useQuery({
+    queryKey: ["vendor-menu-item", vendorId, menuId],
+    queryFn: () => vendor.getVendorMenuItem(vendorId, menuId),
+    select: (res) => res.data.data,
+    enabled: Boolean(vendorId && menuId),
   });
 };

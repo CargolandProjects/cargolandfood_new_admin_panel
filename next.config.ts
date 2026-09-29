@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         hostname: "res.cloudinary.com",
         // Allows all Cloudinary accounts and paths
       },
+      {
+        protocol: "http",
+        hostname: "example.com",
+      },
     ],
   },
 };
