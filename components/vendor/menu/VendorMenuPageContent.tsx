@@ -1,13 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Download,
-  ListFilter,
   Search,
-  ArrowUpDown,
   SlidersHorizontal,
   SortDesc,
 } from "lucide-react";
@@ -15,9 +13,11 @@ import {
 import { Button } from "@/components/ui/button";
 import Pagination from "@/components/vendor/Pagination";
 import MenuTabs, { type MenuTab } from "@/components/vendor/menu/MenuTabs";
-import MenuTable, { type MenuAction } from "@/components/vendor/menu/MenuTable";
+import MenuTable from "@/components/vendor/menu/MenuTable";
 import { useVendorMenu } from "@/lib/hooks/queries/useVendor";
 import { useDeleteMenuItem } from "@/lib/hooks/mutations/useVendorMenu";
+
+export type MenuAction = "view" | "edit" | "delete";
 
 export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
   const router = useRouter();
