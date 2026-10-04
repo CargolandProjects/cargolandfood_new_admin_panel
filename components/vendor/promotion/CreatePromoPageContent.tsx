@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ArrowLeft, X } from "lucide-react";
@@ -23,7 +23,6 @@ import { UploadedImage } from "@/lib/services/image.service";
 import { useSession } from "@/lib/providers/SessionProvider";
 import { toast } from "sonner";
 import z from "zod";
-import { useCreateVendorMenu } from "@/lib/hooks/mutations/useVendorMenu";
 import { useVendorMenu } from "@/lib/hooks/queries/useVendor";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { MenuItem } from "@/lib/services/vendor.service";
@@ -48,7 +47,9 @@ export const createPromotionSchema = z
     endDate: z.string().min(1, "End date is required"),
     startTime: z.string().min(1, "Start time is required"),
     endTime: z.string().min(1, "End time is required"),
-    appliedTo: z.array(promotionMenuItemSchema).default([]).optional(),
+    appliedTo: z
+      .array(promotionMenuItemSchema)
+      .min(1, "Select at least one menu item"),
     campaignImgUrl: z.string().min(1, "Image is required"),
     publicImgUrl: z.string().min(1, "Image is required"),
   })
@@ -113,10 +114,13 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
   const [menuSearch, setMenuSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [promoDetails, setPromoDetails] = useState<Promotion | null>(null);
-  const debouncedMenuSearch = useDebounce(menuSearch, 400);
+  //   const debouncedMenuSearch = useDebounce(menuSearch, 400);
 
   const { mutate: createPromotion, isPending } = useCreatePromo();
   const { data: vendorMenu, isFetching } = useVendorMenu(vendorId);
+
+  const searchParams = useSearchParams();
+  const zoneId = searchParams.get("zoneId");
 
   const isUploading = useIsMutating({ mutationKey: ["upload-image"] }) > 0;
   const isDeleting = useIsMutating({ mutationKey: ["delete-image"] }) > 0;
@@ -137,7 +141,7 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
     setValue,
     setError,
     clearErrors,
-    formState,
+    // formState,
   } = useForm<CreatePromotionFormData>({
     resolver: zodResolver(createPromotionSchema),
     defaultValues: {
@@ -154,9 +158,9 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
   });
 
   // Log form errors during development
-  useEffect(() => {
-    console.log("FORM_STATE: ", formState.errors);
-  }, [formState.errors]);
+  //   useEffect(() => {
+  //     console.log("FORM_STATE: ", formState.errors);
+  //   }, [formState.errors]);
 
   const watchedMenuItems = watch("appliedTo") ?? [];
   const publicId = watch("publicImgUrl");
@@ -198,17 +202,16 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
 
   const onSubmit = async (data: CreatePromotionFormData) => {
     if (!session) return;
-    if (!vendorId) {
-      toast.error("Vendor id not found");
+    if (!vendorId || !zoneId) {
+      toast.error("Vendor or zone id not found");
       return;
     }
 
     const payload = {
       ...data,
       appliedTo: (data.appliedTo ?? []).map((item) => item.id),
+      zoneId,
     };
-
-    console.log("CREATE PROMOTION PAYLOAD: ", payload);
 
     createPromotion(
       { vendorId, data: payload },

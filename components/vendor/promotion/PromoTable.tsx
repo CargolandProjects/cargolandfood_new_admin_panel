@@ -33,7 +33,7 @@ interface VendorsTableProps {
   isSuccess?: boolean;
   isError?: boolean;
   onRetry: () => void;
-  onAction?: (action: PromoAction, vendorId: string) => void;
+  onAction?: (action: PromoAction, vendor: VendorListVendor) => void;
   onRowClick?: (vendorId: string) => void;
 }
 
@@ -238,25 +238,25 @@ export default function PromoTable({
                     <DropdownMenuContent align="end" className="w-23.5!">
                       <DropdownMenuItem
                         className="text-xs font-medium cursor-pointer"
-                        onClick={() => onAction?.("view", vendor.id)}
+                        onClick={() => onAction?.("view", vendor)}
                       >
                         View
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-xs font-medium cursor-pointer"
-                        onClick={() => onAction?.("create", vendor.id)}
+                        onClick={() => onAction?.("create", vendor)}
                       >
                         Create Promo
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-xs font-medium cursor-pointer"
-                        onClick={() => onAction?.("generate", vendor.id)}
+                        onClick={() => onAction?.("generate", vendor)}
                       >
                         Generate Coupon
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-xs font-medium text-red-600 hover:text-red-600! cursor-pointer"
-                        onClick={() => onAction?.("delete", vendor.id)}
+                        onClick={() => onAction?.("delete", vendor)}
                       >
                         Delete
                       </DropdownMenuItem>
