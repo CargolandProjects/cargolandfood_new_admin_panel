@@ -29,6 +29,9 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { MenuItem } from "@/lib/services/vendor.service";
 import MenuItemCombobox from "./MenuItemCombobox";
 import { formatNumber } from "@/lib/utils";
+import { useCreatePromo } from "@/lib/hooks/mutations/useMutatePromo";
+import PromoDetailsModal from "./PromoDetailsModal";
+import { Promotion } from "@/lib/services/promo.service";
 
 export const promotionMenuItemSchema = z.object({
   id: z.string(),
@@ -97,20 +100,23 @@ export const createPromotionSchema = z
 export type CreatePromotionFormData = z.infer<typeof createPromotionSchema>;
 export type PromotionMenuItem = z.infer<typeof promotionMenuItemSchema>;
 
+const toISODate = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
   const router = useRouter();
   const session = useSession();
   const [menuSearch, setMenuSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [promoDetails, setPromoDetails] = useState<Promotion | null>(null);
   const debouncedMenuSearch = useDebounce(menuSearch, 400);
 
-  const { mutate: createPromotion, isPending } = useCreateVendorMenu();
-  const {
-    data: vendorMenu,
-    isFetching,
-    isError,
-    isSuccess,
-    refetch,
-  } = useVendorMenu(vendorId);
+  const { mutate: createPromotion, isPending } = useCreatePromo();
+  const { data: vendorMenu, isFetching } = useVendorMenu(vendorId);
 
   const isUploading = useIsMutating({ mutationKey: ["upload-image"] }) > 0;
   const isDeleting = useIsMutating({ mutationKey: ["delete-image"] }) > 0;
@@ -155,11 +161,19 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
   const watchedMenuItems = watch("appliedTo") ?? [];
   const publicId = watch("publicImgUrl");
   const startDate = watch("startDate");
+  const endDate = watch("endDate");
+  const startTime = watch("startTime");
 
-  const todayISO = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
+  const todayISO = toISODate(new Date()); // YYYY-MM-DD in local time
+  const now = new Date();
+  const currentTimeHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  //   console.log("WATCHED MENU ITEMS: ", watchedMenuItems);
-  //   console.log("MENU ITEMS: ", menuItems);
+  // Start time is only bounded by "now" when the start date is today
+  const startTimeMin = startDate === todayISO ? currentTimeHHMM : undefined;
+
+  // End time is only bounded by start time when both dates match
+  const endTimeMin =
+    endDate && startDate && endDate === startDate ? startTime : undefined;
 
   const handleToggleMenuItem = (item: PromotionMenuItem) => {
     const current = watch("appliedTo") ?? [];
@@ -192,19 +206,20 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
     const payload = {
       ...data,
       appliedTo: (data.appliedTo ?? []).map((item) => item.id),
-      createdBy: session.id,
     };
 
     console.log("CREATE PROMOTION PAYLOAD: ", payload);
 
-    // createPromotion(
-    //   { vendorId, data: payload },
-    //   {
-    //     onSuccess: () => {
-    //       router.push(`/vendor-management/${vendorId}/promotions`);
-    //     },
-    //   },
-    // );
+    createPromotion(
+      { vendorId, data: payload },
+      {
+        onSuccess: (res) => {
+          setOpen(true);
+          setPromoDetails(res.data);
+          reset();
+        },
+      },
+    );
   };
 
   const handleError = useCallback(
@@ -368,6 +383,7 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
                       {...field}
                       id={field.name}
                       type="time"
+                      min={startTimeMin}
                       placeholder="00:00 AM"
                       aria-invalid={fieldState.invalid}
                       className="form-input"
@@ -395,6 +411,7 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
                       {...field}
                       id={field.name}
                       type="time"
+                      min={endTimeMin}
                       placeholder="11:59 PM"
                       aria-invalid={fieldState.invalid}
                       className="form-input"
@@ -520,6 +537,12 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
             </Button>
           </div>
         </form>
+
+        <PromoDetailsModal
+          open={open}
+          onOpenChange={setOpen}
+          promotion={promoDetails}
+        />
       </div>
     </>
   );

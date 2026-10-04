@@ -1,4 +1,14 @@
 export { cn } from "cn";
+import { format } from "date-fns";
+
+export function formatDate(date: Date | string) {
+  if (!date) return null;
+  return `${format(date, "dd/MM/yyyy")}`;
+}
+
+export function formatTime(date: Date | string) {
+  return `${format(date, "h:mm")}`;
+}
 
 export const getInitials = (name: string) =>
   name

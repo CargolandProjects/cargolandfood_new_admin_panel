@@ -56,7 +56,7 @@ export default function MenuItemCombobox({
         onChange={(e) => onSearchChange(e.target.value)}
         showTrigger
         showClear={selected.length > 0}
-        className="form-input"
+        className="h-10! ring-0! rounded-sm border-2! border-gray-100! focus-within:border-primary!"
       />
 
       <ComboboxContent>
