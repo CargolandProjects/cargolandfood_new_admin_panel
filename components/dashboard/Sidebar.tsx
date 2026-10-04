@@ -220,6 +220,12 @@ const sidebarData = [
   },
 
   {
+    name: "Promotion Management",
+    icon: "/images/icons/restaurant-2-line.svg",
+    href: "/promotion-management",
+  },
+
+  {
     name: "Employees",
     icon: "/images/icons/UsersThree.png",
     children: [

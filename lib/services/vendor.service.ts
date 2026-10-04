@@ -230,10 +230,10 @@ export const vendor = {
     const searchParams = search ? `&search=${search}` : "";
     const statusParams = status ? `&status=${status}` : "";
     const zoneIdParams = zoneId ? `&zoneId=${zoneId}` : "";
-    const params = `${searchParams}${statusParams}${zoneIdParams}`;
+    const params = `page=${page}&limit=${limit}${searchParams}${statusParams}${zoneIdParams}`;
 
     const res = await apiCall<VendorListRes>(
-      `${API_ROUTES.vendor.getVendors}?page=${page}&limit=${limit}${params}`,
+      `${API_ROUTES.vendor.getVendors}?${params}`,
       {
         method: "GET",
       },

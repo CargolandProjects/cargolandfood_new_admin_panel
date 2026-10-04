@@ -19,12 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn, formatNumber } from "@/lib/utils";
+import { formatNumber } from "@/lib/utils";
 import type { MenuItem } from "@/lib/services/vendor.service";
 import MenuRowSkeleton from "./MenuRowSkeleton";
 import Image from "next/image";
-
-export type MenuAction = "view" | "edit" | "delete";
+import { MenuAction } from "./VendorMenuPageContent";
 
 interface MenuTableProps {
   items: MenuItem[];

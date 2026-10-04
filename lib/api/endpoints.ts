@@ -23,4 +23,7 @@ export const API_ROUTES = {
     upload: "/upload",
     delete: (publicId: string) => `/upload/${publicId}`,
   },
+  promo: {
+    createPromo: (vendorId: string) => `/promotions/${vendorId}`,
+  },
 };
