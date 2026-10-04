@@ -6,6 +6,7 @@ import Pagination from "@/components/vendor/Pagination";
 import PromosTable from "@/components/vendor/promotion/PromoTable";
 import { useDeleteMenuItem } from "@/lib/hooks/mutations/useVendorMenu";
 import { useVendors } from "@/lib/hooks/queries/useVendor";
+import { VendorListVendor } from "@/lib/services/vendor.service";
 import { Download, Search, SlidersHorizontal, SortDesc } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -30,20 +31,22 @@ export default function PromotionManagementPage() {
   const pagination = data?.pagination;
   const totalPages = pagination?.totalPages ?? 5;
 
-  const handleAction = (action: PromoAction, vendorId?: string) => {
+  const handleAction = (action: PromoAction, vendor?: VendorListVendor) => {
     if (action === "view") {
       router.push(`#`);
     }
     if (action === "create") {
-      if (!vendorId) return;
-      router.push(`/promotion-management/${vendorId}/create-promo`);
+      if (!vendor?.id) return;
+      router.push(
+        `/promotion-management/${vendor?.id}/create-promo?zoneId=${vendor.zoneId}`,
+      );
     }
 
     if (action === "delete") {
-      if (!vendorId) return;
-      setDeletingId(vendorId);
+      if (!vendor?.id) return;
+      setDeletingId(vendor.id);
       deleteMenu(
-        { vendorId, menuId: vendorId },
+        { vendorId: vendor.id, menuId: vendor.id },
         {
           onSettled: () => {
             setDeletingId("");

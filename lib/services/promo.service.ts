@@ -1,3 +1,4 @@
+import { CreatePromotionFormData } from "@/components/vendor/promotion/CreatePromoPageContent";
 import { apiCall } from "../api/client";
 import { API_ROUTES } from "../api/endpoints";
 import { ApiResponse } from "./vendor.service";
@@ -25,9 +26,19 @@ export interface Promotion {
 }
 
 type CreatePromoRes = ApiResponse<Promotion>;
+type CreatePromoData = Omit<CreatePromotionFormData, "appliedTo"> & {
+  appliedTo: string[];
+  zoneId: string;
+};
 
 export const promo = {
-  async createPromo({ vendorId, data }: { vendorId: string; data: unknown }) {
+  async createPromo({
+    vendorId,
+    data,
+  }: {
+    vendorId: string;
+    data: CreatePromoData;
+  }) {
     const res = apiCall<CreatePromoRes>(
       API_ROUTES.promo.createPromo(vendorId),
       {
