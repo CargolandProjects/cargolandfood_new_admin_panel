@@ -1,13 +1,35 @@
 export { cn } from "cn";
-import { format } from "date-fns";
+import { format, isValid, parse } from "date-fns";
 
 export function formatDate(date: Date | string) {
   if (!date) return null;
   return `${format(date, "dd/MM/yyyy")}`;
 }
 
+export function formatDate2(date: Date | string) {
+  if (!date) return null;
+  return `${format(date, "y-M-dd")}`;
+}
+
+export function formatDate3(date: Date | string) {
+  if (!date) return null;
+  return `${format(date, "do LLL, y")}`;
+}
+
 export function formatTime(date: Date | string) {
+  if (!date) return null;
   return `${format(date, "h:mm")}`;
+}
+
+export function formatTime2(time:  string) {
+  if (!time) return null;
+
+  // parse the time string against a "today" anchor Date
+  const parsed = parse(time.trim(), "HH:mm", new Date());
+  console.log("parsed", parsed, isValid(parsed));
+  if (!isValid(parsed)) return null;
+
+  return `${format(parsed, "h:mm a")}`;
 }
 
 export const getInitials = (name: string) =>

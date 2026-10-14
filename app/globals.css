@@ -140,6 +140,16 @@ body {
   }
 
   @layer utilities {
+    
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
     .form-title {
       @apply font-medium sm:font-bold text-2xl sm:text-[32px] leading-8 sm:leading-10;
     }

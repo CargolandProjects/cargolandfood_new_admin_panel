@@ -25,5 +25,17 @@ export const API_ROUTES = {
   },
   promo: {
     createPromo: (vendorId: string) => `/promotions/${vendorId}`,
+    updatePromo: (vendorId: string, promoId: string) =>
+      `/promotions/${vendorId}/${promoId}`,
+    vendorPromotions: (vendorId: string) =>
+      `/promotions/get-all/promotions/${vendorId}`,
+    getPromoById: (vendorId: string, promoId: string) =>
+      `/promotions/get/promotions/${vendorId}/${promoId}`,
+    activatePromo: (vendorId: string, promoId: string) =>
+      `/promotions/activate/${vendorId}/${promoId}`,
+    deactivatePromo: (vendorId: string, promoId: string) =>
+      `/promotions/deactivate/${vendorId}/${promoId}`,
+    deletePromotion: (vendorId: string, promoId: string) =>
+      `/promotions/get-all/promotions/${vendorId}/${promoId}`,
   },
 };

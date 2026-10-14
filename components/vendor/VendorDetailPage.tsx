@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Copy,
   Download,
+  MoreVertical,
   Search,
   SlidersHorizontal,
   SortDesc,
@@ -23,6 +24,12 @@ import TransactionHistory, {
 import { useVendor } from "@/lib/hooks/queries/useVendor";
 import { cn, getInitials } from "@/lib/utils";
 import Pagination from "./Pagination";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
   const router = useRouter();
@@ -59,7 +66,45 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
           Back
         </Button>
 
-        <div className="flex items-center gap-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <Button
+              variant="outline"
+              className="size-10 hover:bg-gray-100 text-gray-700 rounded-[8px]"
+            >
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-23.5! px-2 min-w-[110px] rounded-[8px]"
+          >
+            <DropdownMenuItem
+              className="text-xs font-medium cursor-pointer text-gray-500"
+              onClick={() => router.push(`/vendor-management/${vendorId}/menu`)}
+            >
+              View Menu
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-xs font-medium cursor-pointer text-gray-500"
+              onClick={() =>
+                router.push(`/vendor-management/${vendorId}/menu/create-menu`)
+              }
+            >
+              Create Menu
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-xs font-medium cursor-pointer  text-gray-500"
+              onClick={() => router.push(`/vendor-management/${vendorId}/promotion`)}
+            >
+              All Promotion
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* view & create menu buttons */}
+        {/* <div className="flex items-center gap-3">
           <Button
             onClick={() => router.push(`/vendor-management/${vendorId}/menu`)}
             variant="outline"
@@ -76,7 +121,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
           >
             Create Menu
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Vendor info card */}
