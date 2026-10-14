@@ -1,4 +1,4 @@
-import VendorPageContent from "@/components/vendor/VendorPageContent";
+import VendorDetailPage from "@/components/vendor/VendorDetailPage";
 
 export default async function VendorPage({
   params,
@@ -7,5 +7,5 @@ export default async function VendorPage({
 }) {
   const { id } = await params;
 
-  return <VendorPageContent vendorId={id} />;
+  return <VendorDetailPage vendorId={id} />;
 }

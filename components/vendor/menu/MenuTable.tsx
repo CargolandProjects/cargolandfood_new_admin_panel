@@ -24,14 +24,17 @@ import type { MenuItem } from "@/lib/services/vendor.service";
 import MenuRowSkeleton from "./MenuRowSkeleton";
 import Image from "next/image";
 import { MenuAction } from "./VendorMenuPageContent";
+import MenuDetailsModal from "./MenuDetailsModal";
 
 interface MenuTableProps {
   items: MenuItem[];
   isLoading?: boolean;
   deletingId?: string;
+  selectedId?: string | null;
   isSuccess?: boolean;
   isError?: boolean;
   onRetry: () => void;
+  setSelectedId: (v: string | null) => void;
   onAction?: (action: MenuAction, id: string) => void;
 }
 
@@ -41,10 +44,12 @@ export default function MenuTable({
   items,
   isLoading,
   deletingId,
+  selectedId,
   isSuccess,
   isError,
   onRetry,
   onAction,
+  setSelectedId,
 }: MenuTableProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -61,6 +66,10 @@ export default function MenuTable({
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  };
+
+  const handleSelect = (id: string) => {
+    setSelectedId(id === selectedId ? null : id);
   };
 
   return (
@@ -140,133 +149,159 @@ export default function MenuTable({
             const addons = item.addons || [];
             const sizes = item.sizes || [];
             return (
-              <TableRow
-                key={item.id}
-                data-state={isSelected ? "selected" : undefined}
-                className={`${deletingId === item.id ? "animate-pulse duration-200" : ""} border-b border-gray-50 align-top hover:bg-gray-50/60`}
-              >
-                <TableCell
-                  className="pl-6 pt-5"
-                  onClick={(e) => e.stopPropagation()}
+              <>
+                <TableRow
+                  onClick={() => setSelectedId(item.id)}
+                  key={item.id}
+                  data-state={isSelected ? "selected" : undefined}
+                  className={`${deletingId === item.id ? "animate-pulse duration-200" : ""} border-b border-gray-50 align-top hover:bg-gray-50/60 cursor-pointer`}
                 >
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={() => toggleOne(item.id)}
-                    aria-label={`Select ${item.name}`}
-                  />
-                </TableCell>
-                {/* image/name */}
-                <TableCell className="py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="relative size-12">
-                      <Image
-                        src={item.uploadImageUrl}
-                        alt={item.name}
-                        className="size-full rounded-lg object-cover"
-                        fill
-                      />
+                  <TableCell
+                    className="pl-6 pt-5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleOne(item.id)}
+                      aria-label={`Select ${item.name}`}
+                    />
+                  </TableCell>
+                  {/* image/name */}
+                  <TableCell className="py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative size-12">
+                        <Image
+                          src={item.uploadImageUrl}
+                          alt={item.name}
+                          className="size-full rounded-lg object-cover"
+                          fill
+                        />
+                      </div>
+                      <div className="min-w-0 leading-tight">
+                        <p className="truncate text-sm font-semibold text-gray-900">
+                          {item.name}
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-400">
+                          {getMenuCode(item.id)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0 leading-tight">
-                      <p className="truncate text-sm font-semibold text-gray-900">
-                        {item.name}
-                      </p>
-                      <p className="mt-0.5 text-xs text-gray-400">
-                        {getMenuCode(item.id)}
-                      </p>
-                    </div>
-                  </div>
-                </TableCell>
-                {/* Category badge */}
-                <TableCell className="py-4">
-                  <span className="inline-flex items-center px-1 py-0.5 text-xs font-medium text-[#144D68] rounded-[4px] bg-[#DCEFF7]">
-                    {item.category?.name ?? "—"}
-                  </span>
-                </TableCell>
-                {/* Description */}
-                {/* if ever line-clamp doesn't work, add whitespace-normal it likely inhenrited no-wrap from the parent*/}
-                <TableCell className="max-w-55 py-4">
-                  <p className="line-clamp-2 text-xs whitespace-normal truncate font-medium text-gray-500">
-                    {item.description || "—"}
-                  </p>
-                </TableCell>
-                {/* Price */}
-                <TableCell className="py-4 text-sm font-semibold text-gray-900">
-                  ₦{formatNumber(item.price)}
-                </TableCell>
-                {/* Add-ons */}
-                <TableCell className="py-4">
-                  {addons.length > 0 ? (
-                    <ul className="space-y-1">
-                      {addons.map((addon) => (
-                        <li
-                          key={addon.id}
-                          className="text-[10px] font-medium px-1 py-0.5 w-fit rounded-[4px] bg-gray-100 text-gray-600"
+                  </TableCell>
+                  {/* Category badge */}
+                  <TableCell className="py-4">
+                    <span className="inline-flex items-center px-1 py-0.5 text-xs font-medium text-[#144D68] rounded-[4px] bg-[#DCEFF7]">
+                      {item.category?.name ?? "—"}
+                    </span>
+                  </TableCell>
+                  {/* Description */}
+                  {/* if ever line-clamp doesn't work, add whitespace-normal it likely inhenrited no-wrap from the parent*/}
+                  <TableCell className="max-w-55 py-4">
+                    <p className="line-clamp-2 text-xs whitespace-normal truncate font-medium text-gray-500">
+                      {item.description || "—"}
+                    </p>
+                  </TableCell>
+                  {/* Price */}
+                  <TableCell className="py-4 text-sm font-semibold text-gray-900">
+                    ₦{formatNumber(item.price)}
+                  </TableCell>
+                  {/* Add-ons */}
+                  <TableCell className="py-4">
+                    {addons.length === 0 && (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                    {addons.length > 0 && (
+                      <ul className="space-y-1">
+                        {addons.slice(0, 2).map((addon, idx, adns) => {
+                          const showExCount =
+                            idx === adns.length - 1 && addons.length > 2;
+                          return (
+                            <li key={addon.id} className="flex items-center gap-0.5">
+                              <p className="text-[10px] font-medium px-1 py-0.5 w-fit rounded-[4px] bg-gray-100 text-gray-600">
+                                {addon.name}
+                              </p>{" "}
+                              {showExCount && (
+                                <p className="ml-0.5 text-[10px] font-medium text-gray-600">
+                                  +{addons.length - 2}
+                                </p>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </TableCell>
+                  {/* Sizes */}
+                  <TableCell className="py-4">
+                    {sizes.length === 0 && (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                    {sizes.length > 0 && (
+                      <ul className="space-y-1">
+                        {sizes.slice(0, 2).map((size, idx, adns) => {
+                          const showSzsCount =
+                            idx === adns.length - 1 && sizes.length > 2;
+                          return (
+                            <li key={size.id} className="flex items-center gap-0.5">
+                              <p className="px-2.5 py-0.5 w-fit text-[10px] font-medium text-rose-600 bg-rose-50 rounded-sm">
+                                {size.name}
+                              </p>{" "}
+                              {showSzsCount && (
+                                <p className="ml-0.5 text-[10px] font-medium text-gray-600">
+                                  +{sizes.length - 2}
+                                </p>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </TableCell>
+                  {/* Actions */}
+                  <TableCell
+                    className="pr-6 pt-5 text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
                         >
-                          {addon.name}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="text-xs text-gray-400">—</span>
-                  )}
-                </TableCell>
-                {/* Sizes */}
-                <TableCell className="py-4">
-                  {sizes.length === 0 && (
-                    <span className="text-xs text-gray-400">—</span>
-                  )}
-                  {sizes.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {sizes.map((size) => (
-                        <span
-                          key={size.id}
-                          className="inline-flex items-center px-2.5 py-0.5 text-[10px] font-medium text-rose-600 bg-rose-50 rounded-sm"
+                          <MoreVertical className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-23.5!">
+                        <DropdownMenuItem
+                          className="text-xs font-medium cursor-pointer"
+                          onClick={() => onAction?.("view", item.id)}
                         >
-                          {size.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </TableCell>
-                {/* Actions */}
-                <TableCell
-                  className="pr-6 pt-5 text-right"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-23.5!">
-                      <DropdownMenuItem
-                        className="text-xs font-medium cursor-pointer"
-                        onClick={() => onAction?.("view", item.id)}
-                      >
-                        View
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-xs font-medium cursor-pointer"
-                        onClick={() => onAction?.("edit", item.id)}
-                      >
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-xs font-medium text-red-600 hover:text-red-600! cursor-pointer"
-                        onClick={() => onAction?.("delete", item.id)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
+                          View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-xs font-medium cursor-pointer"
+                          onClick={() => onAction?.("edit", item.id)}
+                        >
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-xs font-medium text-red-600 hover:text-red-600! cursor-pointer"
+                          onClick={() => onAction?.("delete", item.id)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+
+                <MenuDetailsModal
+                  open={selectedId === item.id}
+                  onOpenChange={handleSelect}
+                  menu={item}
+                />
+              </>
             );
           })}
       </TableBody>

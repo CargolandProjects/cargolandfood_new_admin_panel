@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
@@ -27,15 +27,18 @@ import { useVendorMenu } from "@/lib/hooks/queries/useVendor";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { MenuItem } from "@/lib/services/vendor.service";
 import MenuItemCombobox from "./MenuItemCombobox";
-import { formatNumber } from "@/lib/utils";
-import { useCreatePromo } from "@/lib/hooks/mutations/useMutatePromo";
+import { formatDate2, formatNumber } from "@/lib/utils";
+import {
+  useCreatePromo,
+  useUpdatePromo,
+} from "@/lib/hooks/mutations/useMutatePromo";
 import PromoDetailsModal from "./PromoDetailsModal";
 import { Promotion } from "@/lib/services/promo.service";
+import { usePromoById } from "@/lib/hooks/queries/usePromo";
 
 export const promotionMenuItemSchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string().optional(),
   uploadImageUrl: z.string(),
 });
 
@@ -50,8 +53,8 @@ export const createPromotionSchema = z
     appliedTo: z
       .array(promotionMenuItemSchema)
       .min(1, "Select at least one menu item"),
-    campaignImgUrl: z.string().min(1, "Image is required"),
-    publicImgUrl: z.string().min(1, "Image is required"),
+    campaignImgUrl: z.string().min(1, "Image is required").or(z.literal("")),
+    publicImgUrl: z.string().min(1, "Image is required").or(z.literal("")),
   })
   .superRefine((data, ctx) => {
     // Wait until all four pieces are present before cross-field checks
@@ -101,6 +104,13 @@ export const createPromotionSchema = z
 export type CreatePromotionFormData = z.infer<typeof createPromotionSchema>;
 export type PromotionMenuItem = z.infer<typeof promotionMenuItemSchema>;
 
+const SUBMIT_LABELS = {
+  create: { idle: "Create", pending: "Creating..." },
+  edit: { idle: "Update", pending: "Updating..." },
+} as const;
+
+type ActionMode = keyof typeof SUBMIT_LABELS;
+
 const toISODate = (d: Date) => {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -108,7 +118,7 @@ const toISODate = (d: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
+const CreatePromotionContent = ({ vendorId }: { vendorId: string }) => {
   const router = useRouter();
   const session = useSession();
   const [menuSearch, setMenuSearch] = useState("");
@@ -116,22 +126,34 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
   const [promoDetails, setPromoDetails] = useState<Promotion | null>(null);
   //   const debouncedMenuSearch = useDebounce(menuSearch, 400);
 
-  const { mutate: createPromotion, isPending } = useCreatePromo();
+  const { mutate: createPromotion, isPending: isCreating } = useCreatePromo();
+  const { mutate: updatePromotion, isPending: isUpdating } = useUpdatePromo();
   const { data: vendorMenu, isFetching } = useVendorMenu(vendorId);
 
   const searchParams = useSearchParams();
   const zoneId = searchParams.get("zoneId");
+  const action = searchParams.get("action");
+  const promoId = searchParams.get("promoId") ?? "";
+  const isEditMode = action === "Edit";
+
+  console.log("VENDOR & PROMO IDS: ", vendorId, promoId);
+  const { data: promo, isLoading: isLoadingPromo } = usePromoById(
+    vendorId,
+    promoId,
+  );
 
   const isUploading = useIsMutating({ mutationKey: ["upload-image"] }) > 0;
   const isDeleting = useIsMutating({ mutationKey: ["delete-image"] }) > 0;
   const isImageAction = isUploading || isDeleting;
-  const menuItems =
-    vendorMenu?.data.map((i) => ({
-      id: i.id,
-      name: i.name,
-      description: i.description,
-      uploadImageUrl: i.uploadImageUrl,
-    })) ?? [];
+  const menuItems: PromotionMenuItem[] = useMemo(
+    () =>
+      vendorMenu?.data.map((i) => ({
+        id: i.id,
+        name: i.name,
+        uploadImageUrl: i.uploadImageUrl,
+      })) ?? [],
+    [vendorMenu],
+  );
 
   const {
     control,
@@ -156,6 +178,35 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
       publicImgUrl: "",
     },
   });
+
+  //   console.log(formatDate2(promo?.startDate || ""));
+
+  // Phase 1: prefill everything except appliedTo
+  useEffect(() => {
+    if (!promo || !isEditMode) return;
+
+    reset({
+      campaignName: promo.campaignName || "",
+      discountValue: promo.percentageValue.toString() || "",
+      startDate: formatDate2(promo.startDate) || "",
+      endDate: formatDate2(promo.endDate) || "",
+      startTime: promo.startTime || "",
+      endTime: promo.endTime || "",
+      campaignImgUrl: promo.campaignImgUrl || "",
+      publicImgUrl: promo.publicImgUrl || "",
+    });
+  }, [promo, isEditMode, reset]);
+
+  // Phase 2: hydrate appliedTo once the menu list arrives
+  useEffect(() => {
+    if (!promo || !isEditMode || !menuItems.length) return;
+
+    const items = promo.items
+      .map((item) => menuItems.find((m) => m.id === item.menuItemId))
+      .filter((m): m is PromotionMenuItem => Boolean(m));
+
+    setValue("appliedTo", items, { shouldValidate: true });
+  }, [menuItems, promo, isEditMode, setValue]);
 
   // Log form errors during development
   //   useEffect(() => {
@@ -206,23 +257,36 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
       toast.error("Vendor or zone id not found");
       return;
     }
-
+    console.log(data);
+    // return;
     const payload = {
       ...data,
       appliedTo: (data.appliedTo ?? []).map((item) => item.id),
       zoneId,
     };
 
-    createPromotion(
-      { vendorId, data: payload },
-      {
-        onSuccess: (res) => {
-          setOpen(true);
-          setPromoDetails(res.data);
-          reset();
+    if (isEditMode)
+      updatePromotion(
+        { vendorId, promoId, data: payload },
+        {
+          onSuccess: (res) => {
+            setOpen(true);
+            setPromoDetails(res.data);
+            reset();
+          },
         },
-      },
-    );
+      );
+    else
+      createPromotion(
+        { vendorId, data: payload },
+        {
+          onSuccess: (res) => {
+            setOpen(true);
+            setPromoDetails(res.data);
+            reset();
+          },
+        },
+      );
   };
 
   const handleError = useCallback(
@@ -241,9 +305,23 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
     setValue("publicImgUrl", image?.publicId ?? "", { shouldValidate: true });
   };
 
+  const handleEdit = (promo: Promotion) => {
+    router.push(
+      `/vendor-management/${vendorId}/promotion/create-promotion?action=Edit&zoneId=${promo.zoneId}&promoId=${promo.id}`,
+    );
+
+    setOpen(false);
+  };
+
+  const isAction = isCreating || isUpdating || isImageAction;
+
+  const mode: ActionMode = isEditMode ? "edit" : "create";
+  const isPendingAction = isEditMode ? isUpdating : isCreating;
+  const submitLabel = SUBMIT_LABELS[mode][isPendingAction ? "pending" : "idle"];
+
   return (
     <>
-      <LoadingOverlay loading={false} />
+      <LoadingOverlay loading={isLoadingPromo} />
 
       <div className="mx-auto max-w-275 pb-10">
         {/* Top bar */}
@@ -533,10 +611,10 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
             </Button>
             <Button
               type="submit"
-              disabled={isPending || isImageAction}
+              disabled={isAction}
               className="px-10 py-2.5 h-auto text-sm font-medium rounded-sm bg-primary/15 text-[#8B4513] hover:bg-[#fcd5be]"
             >
-              {isPending ? "Creating..." : "Create"}
+              {submitLabel}
             </Button>
           </div>
         </form>
@@ -545,10 +623,17 @@ const CreatePromotion = ({ vendorId }: { vendorId: string }) => {
           open={open}
           onOpenChange={setOpen}
           promotion={promoDetails}
+          onEdit={handleEdit}
         />
       </div>
     </>
   );
 };
 
-export default CreatePromotion;
+export default function CreatePromotion({ vendorId }: { vendorId: string }) {
+  return (
+    <Suspense>
+      <CreatePromotionContent vendorId={vendorId} />
+    </Suspense>
+  );
+}

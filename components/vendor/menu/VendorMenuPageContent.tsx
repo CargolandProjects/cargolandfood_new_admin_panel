@@ -26,6 +26,7 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingId, setDeletingId] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data, isLoading, isError, isSuccess, refetch } = useVendorMenu(
     vendorId,
@@ -72,8 +73,10 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
 
   const handleAction = (action: MenuAction, menuId?: string) => {
     if (action === "view") {
-      router.push(`/vendor-management/${vendorId}/menu/create-menu`);
+      if (!menuId) return;
+      setSelectedId(menuId);
     }
+    
     if (action === "edit") {
       if (!menuId) return;
       router.push(
@@ -177,6 +180,8 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
             items={filteredItems}
             isLoading={isLoading}
             deletingId={deletingId}
+            selectedId={selectedId}
+            setSelectedId={setSelectedId}
             isSuccess={isSuccess}
             isError={isError}
             onRetry={refetch}

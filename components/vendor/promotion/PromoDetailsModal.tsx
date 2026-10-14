@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Promotion } from "@/lib/services/promo.service";
+import type { Promotion, PromotionItem } from "@/lib/services/promo.service";
 import { formatDate } from "@/lib/utils";
 
 interface PromotionDetailsModalProps {
@@ -20,22 +20,19 @@ interface PromotionDetailsModalProps {
   onEdit?: (promotion: Promotion) => void;
 }
 
-const formatTime = (time: string) => {
+const formatTime = (time: string | null) => {
+  if (!time?.trim()) return "";
   const [h, m] = time.split(":").map(Number);
   const period = h >= 12 ? "PM" : "AM";
   const displayHour = h === 0 ? 0 : h > 12 ? h - 12 : h;
   return `${String(displayHour).padStart(2, "0")}:${String(m).padStart(2, "0")} ${period}`;
 };
 
-const formatDiscount = (value: string, type: Promotion["type"]) => {
-  if (type === "PERCENTAGE_DISCOUNT") return `${value}%`;
-  return `₦${Number(value).toLocaleString()}`;
-};
+const formatAppliesTo = (appliedTo: PromotionItem[]) => {
+  if (!appliedTo || appliedTo?.length === 0) return "None selected";
 
-const formatAppliesTo = (appliedTo: string[]) =>
-  appliedTo.length === 0
-    ? "All menu items"
-    : `${appliedTo.length} item${appliedTo.length > 1 ? "s" : ""} selected`;
+  return `${appliedTo?.length} item${appliedTo?.length > 1 ? "s" : ""} selected`;
+};
 
 export default function PromoDetailsModal({
   open,
@@ -68,37 +65,39 @@ export default function PromoDetailsModal({
           </DialogHeader>
 
           {/* Hero card */}
-          <div className="mt-1 relative min-h-[106px] overflow-hidden rounded-[6px] bg-gray-50">
-            <Image
-              src={promotion.campaignImgUrl}
-              alt={promotion.campaignName}
-              fill
-              sizes="(max-width: 520px) 100vw, 520px"
-              className="object-cover object-right"
-            />
+          {promotion.campaignImgUrl && (
+            <div className="mt-1 mb-6 relative min-h-[106px] overflow-hidden rounded-[6px] bg-gray-50">
+              <Image
+                src={promotion.campaignImgUrl}
+                alt={promotion.campaignName}
+                fill
+                sizes="(max-width: 520px) 100vw, 520px"
+                className="object-cover object-right"
+              />
 
-            {/* Gradient overlay for text legibility */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/8 to-transparent" />
+              {/* Gradient overlay for text legibility */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/8 to-transparent" />
 
-            {/* Text content */}
-            <div className="relative z-10 flex h-full max-w-[65%] flex-col justify-center px-4 py-2">
-              <p className="text-base font-bold leading-tight text-white">
-                {promotion.campaignName}
-              </p>
-              <p className="mt-1 text-xs leading-snug text-white/90">
-                We are here with the best Burgers in town.
-              </p>
-              <Button
-                type="button"
-                className="mt-1 w-fit rounded-[3px] bg-white h-auto px-5 py-1 text-[10px] font-semibold text-gray-900 shadow-sm transition-colors hover:bg-gray-50"
-              >
-                Buy Now
-              </Button>
+              {/* Text content */}
+              <div className="relative z-10 flex h-full max-w-[65%] flex-col justify-center px-4 py-2">
+                <p className="text-base font-bold leading-tight text-white">
+                  {promotion.campaignName}
+                </p>
+                <p className="mt-1 text-xs leading-snug text-white/90">
+                  We are here with the best Burgers in town.
+                </p>
+                <Button
+                  type="button"
+                  className="mt-1 w-fit rounded-[3px] bg-white h-auto px-5 py-1 text-[10px] font-semibold text-gray-900 shadow-sm transition-colors hover:bg-gray-50"
+                >
+                  Buy Now
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Campaign name */}
-          <div className="mt-6">
+          <div>
             <p className="text-sm text-gray-400">Campaign name</p>
             <p className="mt-1.5 text-base font-medium text-gray-900">
               {promotion.campaignName}
@@ -110,13 +109,13 @@ export default function PromoDetailsModal({
             <div>
               <p className="text-sm text-gray-400">Discount value</p>
               <p className="mt-1.5 text-base font-medium text-gray-900">
-                {formatDiscount(promotion.discountValue, promotion.type)}
+                {promotion.percentageValue}%
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-400">Applies to</p>
               <p className="mt-1.5 text-base font-medium text-gray-900">
-                {formatAppliesTo(promotion.appliedTo)}
+                {formatAppliesTo(promotion.items) ?? 0}
               </p>
             </div>
 
@@ -136,13 +135,13 @@ export default function PromoDetailsModal({
             <div>
               <p className="text-sm text-gray-400">Start time</p>
               <p className="mt-1.5 text-base font-medium text-gray-900">
-                {formatTime(promotion.startTime)}
+                {formatTime(promotion?.startTime)}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-400">End time</p>
               <p className="mt-1.5 text-base font-medium text-gray-900">
-                {formatTime(promotion.endTime)}
+                {formatTime(promotion?.endTime)}
               </p>
             </div>
           </div>

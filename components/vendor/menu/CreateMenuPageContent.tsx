@@ -144,7 +144,10 @@ const CreateMenu = ({ vendorId }: { vendorId: string }) => {
     }
 
     if (action === "Edit") {
-      if (!menuId) return;
+      if (!menuId) {
+        toast.error("menu id is missing");
+        return;
+      }
       const editPayload = {
         ...payload,
         vendorId,

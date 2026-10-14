@@ -38,7 +38,7 @@ export default function PromotionManagementPage() {
     if (action === "create") {
       if (!vendor?.id) return;
       router.push(
-        `/promotion-management/${vendor?.id}/create-promo?zoneId=${vendor.zoneId}`,
+        `/vendor-management/${vendor.id}/promotion/create-promotion?zoneId=${vendor.zoneId}`,
       );
     }
 
