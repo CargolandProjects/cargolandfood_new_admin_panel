@@ -44,12 +44,40 @@ export interface Promotion {
   items: PromotionItem[];
 }
 
+export interface VendorPromotionSummary {
+  id: string;
+  isDiscount: boolean;
+  status: PromotionStatus;
+  startDate: string;
+  endDate: string;
+  activatedAt: string | null;
+}
+
+export interface VendorWithPromotions {
+  id: string;
+  firstName: string;
+  lastName: string;
+  mobileNumber: string;
+  businessCategory: string;
+  businessAddress: string;
+  businessName: string;
+  profileImg: string;
+  businessEmail: string;
+  zoneId: string;
+  isActive: boolean;
+  createdAt: string;
+  promotions: VendorPromotionSummary[];
+  ratings: number | null;
+  totalReviews: number | null;
+}
+
 type CreatePromoRes = ApiResponse<Promotion>;
 type CreatePromoData = Omit<CreatePromotionFormData, "appliedTo"> & {
   appliedTo: string[];
   zoneId: string;
 };
 type VendorPromotionsRes = ApiResponse<Promotion[]>;
+type ActivePromoVendors = ApiResponse<VendorWithPromotions[]>;
 
 export const promo = {
   async createPromo({
@@ -59,7 +87,7 @@ export const promo = {
     vendorId: string;
     data: CreatePromoData;
   }) {
-    const res = apiCall<CreatePromoRes>(
+    const res = await apiCall<CreatePromoRes>(
       API_ROUTES.promo.createPromo(vendorId),
       {
         method: "POST",
@@ -79,7 +107,7 @@ export const promo = {
     promoId: string;
     data: CreatePromoData;
   }) {
-    const res = apiCall<CreatePromoRes>(
+    const res = await apiCall<CreatePromoRes>(
       API_ROUTES.promo.updatePromo(vendorId, promoId),
       {
         method: "PATCH",
@@ -96,7 +124,7 @@ export const promo = {
     vendorId: string;
     promoId: string;
   }) {
-    const res = apiCall<CreatePromoRes>(
+    const res = await apiCall<CreatePromoRes>(
       API_ROUTES.promo.activatePromo(vendorId, promoId),
       {
         method: "POST",
@@ -112,7 +140,7 @@ export const promo = {
     vendorId: string;
     promoId: string;
   }) {
-    const res = apiCall<CreatePromoRes>(
+    const res = await apiCall<CreatePromoRes>(
       API_ROUTES.promo.deactivatePromo(vendorId, promoId),
       {
         method: "POST",
@@ -122,7 +150,7 @@ export const promo = {
   },
 
   async getVendorPromotions(vendorId: string) {
-    const res = apiCall<VendorPromotionsRes>(
+    const res = await apiCall<VendorPromotionsRes>(
       API_ROUTES.promo.vendorPromotions(vendorId),
       {
         method: "GET",
@@ -131,8 +159,18 @@ export const promo = {
     return res;
   },
 
+  async getActivePromoVendors() {
+    const res = await apiCall<ActivePromoVendors>(
+      API_ROUTES.promo.activePromoVendors,
+      {
+        method: "GET",
+      },
+    );
+    return res;
+  },
+
   async getPromoById(vendorId: string, promoId: string) {
-    const res = apiCall<CreatePromoRes>(
+    const res = await apiCall<CreatePromoRes>(
       API_ROUTES.promo.getPromoById(vendorId, promoId),
       {
         method: "GET",
@@ -148,9 +186,12 @@ export const promo = {
     vendorId: string;
     promoId: string;
   }) {
-    const res = apiCall(API_ROUTES.promo.deletePromotion(vendorId, promoId), {
-      method: "DELETE",
-    });
+    const res = await apiCall(
+      API_ROUTES.promo.deletePromotion(vendorId, promoId),
+      {
+        method: "DELETE",
+      },
+    );
     return res;
   },
 };

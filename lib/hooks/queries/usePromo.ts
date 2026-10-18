@@ -22,6 +22,13 @@ export const useVendorPromotions = (vendorId: string) => {
   });
 };
 
+export const useActvePromoVendors = () => {
+  return useQuery({
+    queryKey: ["active-promo-vendors"],
+    queryFn: promo.getActivePromoVendors,
+  });
+};
+
 export const usePromoById = (vendorId: string, promoId: string) => {
   return useQuery({
     queryKey: ["vendor-promo", vendorId, promoId],

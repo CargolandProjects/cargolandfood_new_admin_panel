@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { MoreVertical } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,14 +27,19 @@ import { Promotion, PromotionStatus } from "@/lib/services/promo.service";
 import menuImg from "@/assets/images/menuImg.jpg";
 import { Switch } from "@/components/ui/switch";
 import { useTogglePromoStatus } from "@/lib/hooks/mutations/useMutatePromo";
+import PromoDetailsModal from "./PromoDetailsModal";
+import { useRouter } from "next/navigation";
+import TableError from "../VendorTableError";
 
 interface VendorPromoTableProps {
   items: Promotion[];
   isLoading?: boolean;
   deletingId?: string;
+  selectedId?: string | null;
   isSuccess?: boolean;
   isError?: boolean;
   onRetry: () => void;
+  setSelectedId: (v: string | null) => void;
   onAction?: (action: MenuAction, promo: Promotion) => void;
 }
 
@@ -53,16 +58,19 @@ export default function VendorPromoTable({
   items,
   isLoading,
   deletingId,
+  selectedId,
   isSuccess,
   isError,
   onRetry,
   onAction,
+  setSelectedId,
 }: VendorPromoTableProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [actionId, setActionId] = useState<string | null>(null);
 
   const { mutate: toggleStatus, isPending: isToggling } =
     useTogglePromoStatus();
+  const router = useRouter();
 
   const allSelected = items.length > 0 && selected.size === items.length;
   const someSelected = selected.size > 0 && !allSelected;
@@ -94,6 +102,14 @@ export default function VendorPromoTable({
     );
   };
 
+  const handleEdit = (promo: Promotion) => {
+    router.push(
+      `/vendor-management/${promo.vendorId}/promotion/create-promotion?action=Edit&zoneId=${promo.zoneId}&promoId=${promo.id}`,
+    );
+
+    setSelectedId(null);
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -111,7 +127,7 @@ export default function VendorPromoTable({
             Name
           </TableHead>
           <TableHead className="text-xs font-medium text-gray-500">
-            Category
+            Items
           </TableHead>
           <TableHead className="text-xs font-medium text-gray-500">
             Time Duration
@@ -138,20 +154,12 @@ export default function VendorPromoTable({
           ))}
 
         {isError && (
-          <TableRow className="hover:bg-transparent">
-            <TableCell colSpan={8} className="h-40 text-center">
-              <p className="text-sm text-red-500">
-                Failed to load menu items.{" "}
-                <button
-                  type="button"
-                  onClick={onRetry}
-                  className="font-medium underline underline-offset-2"
-                >
-                  Retry
-                </button>
-              </p>
-            </TableCell>
-          </TableRow>
+          <TableError
+            colSpan={8}
+            description="We couldn't load vendor promos. Please try again."
+            onRetry={onRetry}
+            isRetrying={isLoading}
+          />
         )}
 
         {isSuccess && items.length === 0 && (
@@ -160,7 +168,7 @@ export default function VendorPromoTable({
               colSpan={8}
               className="h-40 text-center text-sm text-gray-500"
             >
-              No menu items yet.
+              No vendor promotions yet.
             </TableCell>
           </TableRow>
         )}
@@ -172,68 +180,72 @@ export default function VendorPromoTable({
             const isActive = promo.status === "ACTIVE";
             const isActionPending = isActionId === promo.id;
             return (
-              <TableRow
-                key={promo.id}
-                data-state={isSelected ? "selected" : undefined}
-                className={`${isActionId === promo.id ? "animate-pulse duration-200" : ""} border-b border-gray-50 align-top hover:bg-gray-50/60`}
-              >
-                <TableCell
-                  className="pl-6 pt-5"
-                  onClick={(e) => e.stopPropagation()}
+              <React.Fragment key={promo.id}>
+                <TableRow
+                  key={promo.id}
+                  onClick={() => setSelectedId(promo.id)}
+                  data-state={isSelected ? "selected" : undefined}
+                  className={`${isActionId === promo.id ? "animate-pulse duration-200" : ""} border-b border-gray-50 align-top hover:bg-gray-50/60 cursor-pointer`}
                 >
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={() => toggleOne(promo.id)}
-                    aria-label={`Select ${promo.campaignName}`}
-                    className="border-neutral-400!"
-                  />
-                </TableCell>
-                {/* image/name */}
-                <TableCell className="py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="relative size-12">
-                      <Image
-                        src={promo?.campaignImgUrl ?? menuImg}
-                        alt={promo.campaignName}
-                        className="size-full rounded-lg object-cover"
-                        fill
-                      />
+                  <TableCell
+                    className="pl-6 pt-5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleOne(promo.id)}
+                      aria-label={`Select ${promo.campaignName}`}
+                      className="border-neutral-400!"
+                    />
+                  </TableCell>
+                  {/* image/name */}
+                  <TableCell className="py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative size-12">
+                        <Image
+                          src={(promo?.campaignImgUrl || undefined) ?? menuImg}
+                          alt={promo.campaignName || ""}
+                          className="size-full rounded-lg object-cover"
+                          fill
+                        />
+                      </div>
+                      <div className="min-w-0 leading-tight">
+                        <p className="truncate text-sm font-semibold text-gray-900">
+                          {promo.campaignName}
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-400">
+                          {promo.id.slice(-6).toUpperCase()}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0 leading-tight">
-                      <p className="truncate text-sm font-semibold text-gray-900">
-                        {promo.campaignName}
-                      </p>
-                      <p className="mt-0.5 text-xs text-gray-400">
-                        {promo.id.slice(-6).toUpperCase()}
-                      </p>
-                    </div>
-                  </div>
-                </TableCell>
-                {/* Category badge */}
-                <TableCell className="py-4">
-                  <span className="inline-flex items-center px-1 py-0.5 text-xs font-medium text-[#144D68] rounded-[4px] bg-[#DCEFF7]">
-                    {/* {item.category?.name ?? "—"} */}
-                  </span>
-                </TableCell>
-                {/* Time Duration */}
-                <TableCell className="max-w-55 py-4">
-                  <p className="line-clamp-2 text-sm whitespace-normal truncate font-medium text-gray-500">
-                    {formatTime2(promo.startTime ?? "")} -{" "}
-                    {formatTime2(promo.endTime ?? "")}
-                  </p>
-                </TableCell>
-                {/* Date duration */}
-                <TableCell className="py-4">
-                  <p className="line-clamp-2 text-sm whitespace-normal truncate font-medium text-gray-500">
-                    {formatDate3(promo.startDate)} -{" "}
-                    {formatDate3(promo.endDate)}
-                  </p>
-                </TableCell>
-                {/* Discount Valye */}
-                <TableCell className="py-4">{promo.percentageValue}%</TableCell>
-                {/* Status */}
-                <TableCell className="py-4">
-                  {/* <div
+                  </TableCell>
+                  {/* Category badge */}
+                  <TableCell className="py-4">
+                    <span className="inline-flex items-center px-1 py-0.5 text-xs font-medium text-[#144D68] rounded-[4px] bg-[#DCEFF7]">
+                      {/* {item.category?.name ?? "—"} */}
+                    </span>
+                  </TableCell>
+                  {/* Time Duration */}
+                  <TableCell className="max-w-55 py-4">
+                    <p className="line-clamp-2 text-sm whitespace-normal truncate font-medium text-gray-500">
+                      {formatTime2(promo.startTime ?? "")} -{" "}
+                      {formatTime2(promo.endTime ?? "")}
+                    </p>
+                  </TableCell>
+                  {/* Date duration */}
+                  <TableCell className="py-4">
+                    <p className="line-clamp-2 text-sm whitespace-normal truncate font-medium text-gray-500">
+                      {formatDate3(promo.startDate)} -{" "}
+                      {formatDate3(promo.endDate)}
+                    </p>
+                  </TableCell>
+                  {/* Discount Valye */}
+                  <TableCell className="py-4">
+                    {promo.percentageValue}%
+                  </TableCell>
+                  {/* Status */}
+                  <TableCell className="py-4">
+                    {/* <div
                     className={`${statusStyles[promo.status].styles} py-0.5 px-1 flex items-center gap-1 rounded-[4px]`}
                   >
                     <div
@@ -244,55 +256,70 @@ export default function VendorPromoTable({
                     </p>
                   </div> */}
 
-                  <Switch
-                    checked={isActive}
-                    disabled={isActionPending && isToggling}
-                    onCheckedChange={() =>
-                      handleToggleStatus(promo.vendorId, promo.id, promo.status)
-                    }
-                    className="data-checked:bg-green-400"
-                    aria-label={`Toggle promo ${promo.campaignName}`}
-                  />
-                </TableCell>
-                {/* Actions */}
-                <TableCell
-                  className="pr-6 pt-5 text-right"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-23.5!">
-                      <DropdownMenuItem
-                        className="text-xs font-medium cursor-pointer"
-                        onClick={() => onAction?.("view", promo)}
-                      >
-                        View
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-xs font-medium cursor-pointer"
-                        onClick={() => onAction?.("edit", promo)}
-                      >
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-xs font-medium text-red-600 hover:text-red-600! cursor-pointer"
-                        onClick={() => onAction?.("delete", promo)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
+                    <Switch
+                      checked={isActive}
+                      disabled={isActionPending && isToggling}
+                      onClick={(e) => e.stopPropagation()}
+                      onCheckedChange={() =>
+                        handleToggleStatus(
+                          promo.vendorId,
+                          promo.id,
+                          promo.status,
+                        )
+                      }
+                      className="data-checked:bg-green-400"
+                      aria-label={`Toggle promo ${promo.campaignName}`}
+                    />
+                  </TableCell>
+                  {/* Actions */}
+                  <TableCell
+                    className="pr-6 pt-5 text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-23.5!">
+                        <DropdownMenuItem
+                          className="text-xs font-medium cursor-pointer"
+                          onClick={() => onAction?.("view", promo)}
+                        >
+                          View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-xs font-medium cursor-pointer"
+                          onClick={() => onAction?.("edit", promo)}
+                        >
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-xs font-medium text-red-600 hover:text-red-600! cursor-pointer"
+                          onClick={() => onAction?.("delete", promo)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+
+                <PromoDetailsModal
+                  open={promo.id === selectedId}
+                  onOpenChange={(open) => {
+                    if (!open) setSelectedId(null);
+                  }}
+                  promotion={promo}
+                  onEdit={handleEdit}
+                />
+              </React.Fragment>
             );
           })}
       </TableBody>

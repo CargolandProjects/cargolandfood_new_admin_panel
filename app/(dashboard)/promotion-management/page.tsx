@@ -4,9 +4,8 @@ import StatCard from "@/components/dashboard/StatCard";
 import { Button } from "@/components/ui/button";
 import Pagination from "@/components/vendor/Pagination";
 import PromosTable from "@/components/vendor/promotion/PromoTable";
-import { useDeleteMenuItem } from "@/lib/hooks/mutations/useVendorMenu";
-import { useVendors } from "@/lib/hooks/queries/useVendor";
-import { VendorListVendor } from "@/lib/services/vendor.service";
+import { useActvePromoVendors } from "@/lib/hooks/queries/usePromo";
+import { VendorWithPromotions } from "@/lib/services/promo.service";
 import { Download, Search, SlidersHorizontal, SortDesc } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,24 +15,23 @@ export type PromoAction = "view" | "create" | "generate" | "delete";
 export default function PromotionManagementPage() {
   const [activeTab, setActiveTab] = useState<"Promo" | "Coupons">("Promo");
   const [searchQuery, setSearchQuery] = useState("");
-  const [deletingId, setDeletingId] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const { data, isLoading, isError, isSuccess, refetch } = useVendors();
+  const { data, isLoading, isError, isSuccess, refetch } =
+    useActvePromoVendors();
   // currentPage,
   // 10,
   // searchQuery || undefined,
   // activeTab === "all" ? undefined : activeTab,
-  const { mutate: deleteMenu } = useDeleteMenuItem();
 
   const router = useRouter();
 
   const items = data?.data ?? [];
-  const pagination = data?.pagination;
-  const totalPages = pagination?.totalPages ?? 5;
+  // const pagination = data?.pagination;
+  const totalPages = 5;
 
-  const handleAction = (action: PromoAction, vendor?: VendorListVendor) => {
+  const handleAction = (action: PromoAction, vendor?: VendorWithPromotions) => {
     if (action === "view") {
-      router.push(`#`);
+      router.push(`/vendor-management/${vendor?.id}/promotion`);
     }
     if (action === "create") {
       if (!vendor?.id) return;
@@ -41,19 +39,10 @@ export default function PromotionManagementPage() {
         `/vendor-management/${vendor.id}/promotion/create-promotion?zoneId=${vendor.zoneId}`,
       );
     }
+  };
 
-    if (action === "delete") {
-      if (!vendor?.id) return;
-      setDeletingId(vendor.id);
-      deleteMenu(
-        { vendorId: vendor.id, menuId: vendor.id },
-        {
-          onSettled: () => {
-            setDeletingId("");
-          },
-        },
-      );
-    }
+  const handleRowClick = (vendorId: string) => {
+    router.push(`/vendor-management/${vendorId}/promotion`);
   };
 
   return (
@@ -189,6 +178,7 @@ export default function PromotionManagementPage() {
             isError={isError}
             onRetry={refetch}
             onAction={handleAction}
+            onRowClick={handleRowClick}
           />
 
           {totalPages > 1 && (

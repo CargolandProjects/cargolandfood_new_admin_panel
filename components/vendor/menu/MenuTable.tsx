@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { MoreVertical, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import MenuRowSkeleton from "./MenuRowSkeleton";
 import Image from "next/image";
 import { MenuAction } from "./VendorMenuPageContent";
 import MenuDetailsModal from "./MenuDetailsModal";
+import TableError from "../VendorTableError";
 
 interface MenuTableProps {
   items: MenuItem[];
@@ -115,20 +116,12 @@ export default function MenuTable({
           ))}
 
         {isError && (
-          <TableRow className="hover:bg-transparent">
-            <TableCell colSpan={8} className="h-40 text-center">
-              <p className="text-sm text-red-500">
-                Failed to load menu items.{" "}
-                <button
-                  type="button"
-                  onClick={onRetry}
-                  className="font-medium underline underline-offset-2"
-                >
-                  Retry
-                </button>
-              </p>
-            </TableCell>
-          </TableRow>
+          <TableError
+            colSpan={8}
+            description="Failed to load menu items."
+            onRetry={onRetry}
+            isRetrying={isLoading}
+          />
         )}
 
         {isSuccess && items.length === 0 && (
@@ -149,10 +142,9 @@ export default function MenuTable({
             const addons = item.addons || [];
             const sizes = item.sizes || [];
             return (
-              <>
+              <React.Fragment key={item.id}>
                 <TableRow
-                  onClick={() => setSelectedId(item.id)}
-                  key={item.id}
+                  onClick={() => handleSelect(item.id)}
                   data-state={isSelected ? "selected" : undefined}
                   className={`${deletingId === item.id ? "animate-pulse duration-200" : ""} border-b border-gray-50 align-top hover:bg-gray-50/60 cursor-pointer`}
                 >
@@ -215,7 +207,10 @@ export default function MenuTable({
                           const showExCount =
                             idx === adns.length - 1 && addons.length > 2;
                           return (
-                            <li key={addon.id} className="flex items-center gap-0.5">
+                            <li
+                              key={addon.id}
+                              className="flex items-center gap-0.5"
+                            >
                               <p className="text-[10px] font-medium px-1 py-0.5 w-fit rounded-[4px] bg-gray-100 text-gray-600">
                                 {addon.name}
                               </p>{" "}
@@ -241,7 +236,10 @@ export default function MenuTable({
                           const showSzsCount =
                             idx === adns.length - 1 && sizes.length > 2;
                           return (
-                            <li key={size.id} className="flex items-center gap-0.5">
+                            <li
+                              key={size.id}
+                              className="flex items-center gap-0.5"
+                            >
                               <p className="px-2.5 py-0.5 w-fit text-[10px] font-medium text-rose-600 bg-rose-50 rounded-sm">
                                 {size.name}
                               </p>{" "}
@@ -301,7 +299,7 @@ export default function MenuTable({
                   onOpenChange={handleSelect}
                   menu={item}
                 />
-              </>
+              </React.Fragment>
             );
           })}
       </TableBody>

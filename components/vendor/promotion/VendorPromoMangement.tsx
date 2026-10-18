@@ -44,6 +44,7 @@ export default function VendorPromoManagement({
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingId, setDeletingId] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data, isLoading, isError, isSuccess, refetch } = useVendorPromotions(
     vendorId,
@@ -60,9 +61,10 @@ export default function VendorPromoManagement({
   const totalPages = 5;
 
   const handleAction = (action: MenuAction, promo?: Promotion) => {
-    // if (action === "view") {
-    //   router.push(`/vendor-management/${vendorId}/menu/create-menu`);
-    // }
+    if (action === "view") {
+      if (!promo) return;
+      setSelectedId(promo?.id);
+    }
 
     if (action === "edit") {
       if (!promo?.id) return;
@@ -245,6 +247,8 @@ export default function VendorPromoManagement({
             deletingId={deletingId}
             isSuccess={isSuccess}
             isError={isError}
+            selectedId={selectedId}
+            setSelectedId={setSelectedId}
             onRetry={refetch}
             onAction={handleAction}
           />
