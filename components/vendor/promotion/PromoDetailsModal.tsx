@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import type { Promotion, PromotionItem } from "@/lib/services/promo.service";
 import { formatDate } from "@/lib/utils";
+import Link from "next/link";
+import { useState } from "react";
 
 interface PromotionDetailsModalProps {
   open: boolean;
@@ -28,11 +30,11 @@ const formatTime = (time: string | null) => {
   return `${String(displayHour).padStart(2, "0")}:${String(m).padStart(2, "0")} ${period}`;
 };
 
-const formatAppliesTo = (appliedTo: PromotionItem[]) => {
-  if (!appliedTo || appliedTo?.length === 0) return "None selected";
+// const formatAppliesTo = (appliedTo: PromotionItem[]) => {
+//   if (!appliedTo || appliedTo?.length === 0) return "None selected";
 
-  return `${appliedTo?.length} item${appliedTo?.length > 1 ? "s" : ""} selected`;
-};
+//   return `${appliedTo?.length} item${appliedTo?.length > 1 ? "s" : ""} selected`;
+// };
 
 export default function PromoDetailsModal({
   open,
@@ -40,12 +42,17 @@ export default function PromoDetailsModal({
   promotion,
   onEdit,
 }: PromotionDetailsModalProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const items = promotion?.items || [];
+  const displayItems = isExpanded ? items : items.slice(0, 3) || [];
+  const hasMore = items.length > 3;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {promotion && (
         <DialogContent
           showCloseButton={false}
-          className="max-w-100! gap-0 overflow-hidden border-none px-7 py-6 shadow-xl"
+          className="max-w-100! gap-0 overflow-y-auto max-h-[calc(100%-2rem)] hide-scrollbar border-none px-7 py-6 shadow-xl"
         >
           {/* Header */}
           <DialogHeader className="gap-0">
@@ -114,8 +121,35 @@ export default function PromoDetailsModal({
             </div>
             <div>
               <p className="text-sm text-gray-400">Applies to</p>
-              <p className="mt-1.5 text-base font-medium text-gray-900">
-                {formatAppliesTo(promotion.items) ?? 0}
+              <p className="mt-1.5 text-base font-medium text-gray-900 flex flex-wrap">
+                {displayItems.map((item, idx, promotions) => {
+                  return (
+                    <Link
+                      key={item.menuItemId}
+                      // Update this route to match your actual menu item details page
+                      href={`/vendor-management/${promotion.vendorId}/menu?menuId=${item.menuItemId}`}
+                      className="text-base font-medium text-gray-900 transition-colors hover:text-primary hover:underline flex"
+                    >
+                      {item.menuItem?.name || "Unknown Item"}
+                      {idx < promotions.length - 1 && (
+                        <p className="mr-1 text-gray-500"> ,</p>
+                      )}
+                    </Link>
+                  );
+                })}
+
+                {hasMore && (
+                  <button
+                    type="button"
+                    onClick={() => setIsExpanded((prev) => !prev)}
+                    className="ml-1 text-sm font-medium"
+                  >
+                    ...
+                    <span className="text-primary text-primary transition-colors hover:text-gray-900 underline underline-offset-3">
+                      {isExpanded ? "Show less" : "more"}
+                    </span>
+                  </button>
+                )}
               </p>
             </div>
 

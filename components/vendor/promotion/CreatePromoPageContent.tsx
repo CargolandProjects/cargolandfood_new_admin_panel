@@ -136,7 +136,6 @@ const CreatePromotionContent = ({ vendorId }: { vendorId: string }) => {
   const promoId = searchParams.get("promoId") ?? "";
   const isEditMode = action === "Edit";
 
-  console.log("VENDOR & PROMO IDS: ", vendorId, promoId);
   const { data: promo, isLoading: isLoadingPromo } = usePromoById(
     vendorId,
     promoId,
@@ -178,8 +177,6 @@ const CreatePromotionContent = ({ vendorId }: { vendorId: string }) => {
       publicImgUrl: "",
     },
   });
-
-  //   console.log(formatDate2(promo?.startDate || ""));
 
   // Phase 1: prefill everything except appliedTo
   useEffect(() => {
@@ -257,7 +254,7 @@ const CreatePromotionContent = ({ vendorId }: { vendorId: string }) => {
       toast.error("Vendor or zone id not found");
       return;
     }
-    console.log(data);
+    // console.log(data);
     // return;
     const payload = {
       ...data,

@@ -21,19 +21,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn, getInitials } from "@/lib/utils";
-import type { VendorListVendor } from "@/lib/services/vendor.service";
-import { VendorAction } from "@/app/(dashboard)/vendor-management/page";
 import VendorRowSkeleton from "../VendorRowSkeleton";
 import TableError from "../VendorTableError";
 import { PromoAction } from "@/app/(dashboard)/promotion-management/page";
+import { VendorWithPromotions } from "@/lib/services/promo.service";
 
 interface VendorsTableProps {
-  vendors: VendorListVendor[];
+  vendors: VendorWithPromotions[];
   isLoading?: boolean;
   isSuccess?: boolean;
   isError?: boolean;
   onRetry: () => void;
-  onAction?: (action: PromoAction, vendor: VendorListVendor) => void;
+  onAction?: (action: PromoAction, vendor: VendorWithPromotions) => void;
   onRowClick?: (vendorId: string) => void;
 }
 
@@ -109,11 +108,9 @@ export default function PromoTable({
             Category
           </TableHead>
           <TableHead className="text-xs font-medium text-gray-500">
-            Revenue
+            Promotions
           </TableHead>
-          <TableHead className="text-xs font-medium text-gray-500">
-            Pending Payout
-          </TableHead>
+
           <TableHead className="text-xs font-medium text-gray-500">
             Rating
           </TableHead>
@@ -142,7 +139,7 @@ export default function PromoTable({
               colSpan={9}
               className="h-40 text-center text-sm text-gray-500"
             >
-              No vendors found.
+              No current vendors with active promotions.
             </TableCell>
           </TableRow>
         )}
@@ -203,22 +200,20 @@ export default function PromoTable({
                   {vendor.mobileNumber}
                 </TableCell>
                 <TableCell className="text-sm text-gray-700">
-                  {vendor.businessCategory}
+                  {vendor.businessCategory.replace("_", " ")}
                 </TableCell>
-                <TableCell className="text-sm font-semibold text-gray-900">
-                  {formatNaira(0)}
+
+                <TableCell className="text-sm text-gray-700">
+                  {vendor.promotions.length}
                 </TableCell>
-                <TableCell className="text-sm font-semibold text-gray-900">
-                  {formatNaira(0)}
+                <TableCell>
+                  <StatusBadge active={vendor.isActive} />
                 </TableCell>
                 <TableCell>
                   <span className="inline-flex items-center gap-1 text-sm text-gray-700">
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    {(0).toFixed(1)}
+                    {(vendor.ratings ?? 0).toFixed(1)}
                   </span>
-                </TableCell>
-                <TableCell>
-                  <StatusBadge active={vendor.isActive} />
                 </TableCell>
                 <TableCell
                   className="pr-6 text-right"
@@ -254,12 +249,12 @@ export default function PromoTable({
                       >
                         Generate Coupon
                       </DropdownMenuItem>
-                      <DropdownMenuItem
+                      {/* <DropdownMenuItem
                         className="text-xs font-medium text-red-600 hover:text-red-600! cursor-pointer"
                         onClick={() => onAction?.("delete", vendor)}
                       >
                         Delete
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

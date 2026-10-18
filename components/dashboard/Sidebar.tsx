@@ -221,7 +221,7 @@ const sidebarData = [
 
   {
     name: "Promotion Management",
-    icon: "/images/icons/restaurant-2-line.svg",
+    icon: "/images/icons/ticket.svg",
     href: "/promotion-management",
   },
 

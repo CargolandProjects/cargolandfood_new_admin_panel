@@ -114,9 +114,9 @@ const CreateMenu = ({ vendorId }: { vendorId: string }) => {
   }, [menu, action]);
 
   //  to log form errors
-  useEffect(() => {
-    console.log("FORM_STATE: ", formState.errors);
-  }, [formState.errors]);
+  // useEffect(() => {
+  //   console.log("FORM_STATE: ", formState.errors);
+  // }, [formState.errors]);
 
   const addonsArray = useFieldArray({ control, name: "addons" });
   const sizesArray = useFieldArray({ control, name: "sizes" });
@@ -153,7 +153,7 @@ const CreateMenu = ({ vendorId }: { vendorId: string }) => {
         vendorId,
         outOfStock: menu?.outOfStock,
       };
-      console.log("EDIT MENU: ", editPayload);
+      // console.log("EDIT MENU: ", editPayload);
       editMenu(
         { vendorId, menuId, data: editPayload },
         {

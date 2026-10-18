@@ -24,7 +24,7 @@ interface MenuItemComboboxProps {
   placeholder?: string;
 }
 
-const getMenuCode = (id: string) => `CLF-${id.slice(-4).toUpperCase()}`;
+const getMenuCode = (id: string) => `${id.slice(-6).toUpperCase()}`;
 
 export default function MenuItemCombobox({
   items,
@@ -94,7 +94,7 @@ export default function MenuItemCombobox({
                   {item.name}
                 </p>
                 <p className="truncate text-xs text-gray-400">
-                  {item.description || getMenuCode(item.id)}
+                  {getMenuCode(item.id)}
                 </p>
               </div>
 

@@ -29,6 +29,7 @@ export const API_ROUTES = {
       `/promotions/${vendorId}/${promoId}`,
     vendorPromotions: (vendorId: string) =>
       `/promotions/get-all/promotions/${vendorId}`,
+    activePromoVendors: "/promotions/get-all/active-promotions",
     getPromoById: (vendorId: string, promoId: string) =>
       `/promotions/get/promotions/${vendorId}/${promoId}`,
     activatePromo: (vendorId: string, promoId: string) =>

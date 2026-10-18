@@ -51,7 +51,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
 
   const totalPages = 5;
 
-  console.log("VENDOR:", vendor);
+  // console.log("VENDOR:", vendor);
 
   return (
     <div>
@@ -98,7 +98,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
               className="text-xs font-medium cursor-pointer  text-gray-500"
               onClick={() => router.push(`/vendor-management/${vendorId}/promotion`)}
             >
-              All Promotion
+              All Promotions
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

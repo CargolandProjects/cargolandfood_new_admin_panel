@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Download,
@@ -20,8 +20,6 @@ import { useDeleteMenuItem } from "@/lib/hooks/mutations/useVendorMenu";
 export type MenuAction = "view" | "edit" | "delete";
 
 export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
-  const router = useRouter();
-
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,6 +34,15 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
     // activeTab === "all" ? undefined : activeTab,
   );
   const { mutate: deleteMenu } = useDeleteMenuItem();
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const menuId = searchParams.get("menuId");
+
+  useEffect(() => {
+    if (!menuId) return;
+    setSelectedId(menuId);
+  }, [menuId]);
 
   const items = data?.data ?? [];
   const pagination = data?.pagination;
@@ -76,7 +83,7 @@ export default function VendorMenuPage({ vendorId }: { vendorId: string }) {
       if (!menuId) return;
       setSelectedId(menuId);
     }
-    
+
     if (action === "edit") {
       if (!menuId) return;
       router.push(
