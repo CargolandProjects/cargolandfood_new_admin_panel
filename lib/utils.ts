@@ -11,9 +11,9 @@ export function formatDate2(date: Date | string) {
   return `${format(date, "y-M-dd")}`;
 }
 
-export function formatDate3(date: Date | string) {
+export function formatDate3(date: Date | string, wComma: boolean = true) {
   if (!date) return null;
-  return `${format(date, "do LLL, y")}`;
+  return `${format(date, `do LLL${wComma ? "," : ""} y`)}`;
 }
 
 export function formatTime(date: Date | string) {
@@ -21,7 +21,7 @@ export function formatTime(date: Date | string) {
   return `${format(date, "h:mm")}`;
 }
 
-export function formatTime2(time:  string) {
+export function formatTime2(time: string) {
   if (!time) return null;
 
   // parse the time string against a "today" anchor Date
@@ -30,6 +30,10 @@ export function formatTime2(time:  string) {
   if (!isValid(parsed)) return null;
 
   return `${format(parsed, "h:mm a")}`;
+}
+
+export function formatTime3(date: Date | string) {
+  return `${format(date, "h:mm a")}`;
 }
 
 export const getInitials = (name: string) =>

@@ -3,6 +3,8 @@ import { DashboardData } from "../api/dashboard";
 import { API_ROUTES } from "../api/endpoints";
 import { CreateMenuFormData } from "../schema/menu";
 
+export type TransactionType = "CREDIT" | "DEBIT";
+
 export type ApiResponse<T> = {
   success: boolean;
   statusCode: number;
@@ -161,6 +163,44 @@ export interface Vendor {
   workingHours: WorkingHours[];
 }
 
+export interface VendorTransaction {
+  id: string;
+  walletId: string;
+  type: TransactionType;
+  amount: string;
+  reference: string;
+  description: string | null;
+  orderId: string | null;
+  status: "PENDING" | "SUCCESS";
+  createdAt: string;
+}
+
+export interface VendorPaymentStats {
+  pendingPayout: {
+    balance: string;
+  };
+  vendorTransactions: VendorTransaction[];
+  totalPayout: number;
+}
+
+export interface VendorDashboardStats {
+  totalOrders: number;
+  totalRevenue: {
+    _sum: {
+      total: string;
+    };
+  };
+  completedOrder: number;
+  payment: VendorPaymentStats;
+}
+
+// The specific shape of the "data" object inside your API response
+export interface VendorManagementDashboardData {
+  status: string;
+  message: string;
+  data: VendorDashboardStats;
+}
+
 type CreateMenuData = CreateMenuFormData & { createdBy: string };
 
 export type VendorListVendor = Omit<
@@ -168,7 +208,7 @@ export type VendorListVendor = Omit<
   "review" | "address" | "workingHours"
 >;
 
-export type VendorStatsResponse = ApiResponse<{
+export type AllVendorStatsRes = ApiResponse<{
   status: string;
   message: string;
   data: VendorStats;
@@ -199,6 +239,8 @@ type VendorMenuItem = ApiResponse<{
   data: MenuItem;
 }>;
 
+type VendorStatsRes = ApiResponse<VendorManagementDashboardData>;
+
 export const vendor = {
   async getDashboard() {
     const res = await apiCall<ApiResponse<DashboardData>>(
@@ -210,9 +252,19 @@ export const vendor = {
     return res;
   },
 
-  async getVendorStats() {
-    const res = await apiCall<VendorStatsResponse>(
-      API_ROUTES.vendor.vendorStats,
+  async getAllVendorsStats() {
+    const res = await apiCall<AllVendorStatsRes>(
+      API_ROUTES.vendor.allVendorStats,
+      {
+        method: "GET",
+      },
+    );
+    return res;
+  },
+
+  async getVendorStats(vendorId: string) {
+    const res = await apiCall<VendorStatsRes>(
+      API_ROUTES.vendor.vendorStats(vendorId),
       {
         method: "GET",
       },

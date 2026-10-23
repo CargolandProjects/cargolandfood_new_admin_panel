@@ -18,10 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import StatCard from "@/components/dashboard/StatCard";
-import TransactionHistory, {
-  type VendorTransaction,
-} from "@/components/vendor/VendorTxHistory";
-import { useVendor } from "@/lib/hooks/queries/useVendor";
+import TransactionHistory from "@/components/vendor/VendorTxHistory";
+import { useVendor, useVendorStats } from "@/lib/hooks/queries/useVendor";
 import { cn, getInitials } from "@/lib/utils";
 import Pagination from "./Pagination";
 import {
@@ -33,12 +31,13 @@ import {
 
 export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
   const router = useRouter();
-  const { data: vendor, isLoading, isFetching } = useVendor(vendorId);
+  const { data: vendor, isLoading } = useVendor(vendorId);
+  const { data: vendorStats, isLoading: isStatsLoading } =
+    useVendorStats(vendorId);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const transactions: VendorTransaction[] = []; // wire to real API when available
-  const totalTxnPages = 1;
+  // const totalTxnPages = 1;
 
   const handleCopy = (text: string) => {
     navigator.clipboard?.writeText(text);
@@ -50,6 +49,8 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
     .join(" ");
 
   const totalPages = 5;
+
+  const vendorTransactions = vendorStats?.payment.vendorTransactions ?? [];
 
   // console.log("VENDOR:", vendor);
 
@@ -96,7 +97,9 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-xs font-medium cursor-pointer  text-gray-500"
-              onClick={() => router.push(`/vendor-management/${vendorId}/promotion`)}
+              onClick={() =>
+                router.push(`/vendor-management/${vendorId}/promotion`)
+              }
             >
               All Promotions
             </DropdownMenuItem>
@@ -208,7 +211,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         <StatCard
           title="Total Orders"
           loading={isLoading}
-          value={String(vendor?.totalOrder ?? 0)}
+          value={`₦${vendorStats?.totalOrders.toLocaleString() ?? "0"}`}
           subtext="Order"
           trend="+2%"
           color="text-green-500"
@@ -217,7 +220,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         <StatCard
           title="Total Revenue"
           loading={isLoading}
-          value="₦0"
+          value={`₦${Number(vendorStats?.totalRevenue._sum.total).toLocaleString() ?? "0"}`}
           subtext="Revenue"
           trend="+2%"
           color="text-green-500"
@@ -226,7 +229,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         <StatCard
           title="Successful Orders"
           loading={isLoading}
-          value="10"
+          value={`₦${vendorStats?.completedOrder.toLocaleString() ?? "0"}`}
           subtext="Successful"
           trend="-4"
           color="text-red-500"
@@ -235,7 +238,11 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         <StatCard
           title="Pending Payout"
           loading={isLoading}
-          value="₦0"
+          value={`₦${
+            Number(
+              vendorStats?.payment.pendingPayout.balance,
+            ).toLocaleString() ?? "0"
+          }`}
           subtext="Payout"
           trend="+4"
           color="text-green-500"
@@ -248,7 +255,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         <StatCard
           title="Total Payouts"
           loading={isLoading}
-          value="₦0"
+          value={`₦${vendorStats?.payment.totalPayout.toLocaleString() ?? "0"}`}
           subtext="Order"
           trend="+2%"
           color="text-green-500"
@@ -352,8 +359,8 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         </div>
         {/* Transaction history */}
         <TransactionHistory
-          transactions={transactions}
-          isLoading={isFetching}
+          transactions={vendorTransactions}
+          isLoading={isLoading}
         />
 
         <div className="px-4 py-3">

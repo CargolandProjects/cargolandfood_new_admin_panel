@@ -38,6 +38,25 @@ interface VendorsTableProps {
 
 const formatNaira = (value: number) => `₦${value.toLocaleString()}`;
 
+const StatusBadge = ({ active }: { active: boolean }) => {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        active ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-600",
+      )}
+    >
+      <span
+        className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          active ? "bg-emerald-500" : "bg-gray-400",
+        )}
+      />
+      {active ? "Active" : "Inactive"}
+    </span>
+  );
+};
+
 export default function VendorsTable({
   vendors,
   isLoading,
@@ -63,27 +82,6 @@ export default function VendorsTable({
       else next.add(id);
       return next;
     });
-  };
-
-  const StatusBadge = ({ active }: { active: boolean }) => {
-    return (
-      <span
-        className={cn(
-          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-          active
-            ? "bg-emerald-50 text-emerald-700"
-            : "bg-gray-100 text-gray-600",
-        )}
-      >
-        <span
-          className={cn(
-            "h-1.5 w-1.5 rounded-full",
-            active ? "bg-emerald-500" : "bg-gray-400",
-          )}
-        />
-        {active ? "Active" : "Inactive"}
-      </span>
-    );
   };
 
   return (
