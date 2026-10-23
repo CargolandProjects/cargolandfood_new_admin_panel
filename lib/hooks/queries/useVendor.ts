@@ -9,10 +9,18 @@ export const useDashboard = () => {
   });
 };
 
-export const useVendorStat = () => {
+export const useAllVendorsStats = () => {
   return useQuery({
-    queryKey: ["vendor-stats"],
-    queryFn: vendor.getVendorStats,
+    queryKey: ["all-vendors-stats"],
+    queryFn: vendor.getAllVendorsStats,
+    select: (res) => res.data.data,
+  });
+};
+
+export const useVendorStats = (vendorId: string) => {
+  return useQuery({
+    queryKey: ["vendor-stats", vendorId],
+    queryFn: () => vendor.getVendorStats(vendorId),
     select: (res) => res.data.data,
   });
 };

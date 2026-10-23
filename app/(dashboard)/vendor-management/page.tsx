@@ -6,9 +6,9 @@ import Pagination from "@/components/vendor/Pagination";
 import VendorsTable from "@/components/vendor/VendorsTable";
 import { formatIncome } from "@/lib/api/dashboard";
 import {
+  useAllVendorsStats,
   useDashboard,
   useVendors,
-  useVendorStat,
 } from "@/lib/hooks/queries/useVendor";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { Download, Search, SlidersHorizontal, SortDesc } from "lucide-react";
@@ -30,7 +30,7 @@ export default function VendorManagementPage() {
     isError,
     isSuccess,
   } = useVendors(currentPage, 10, debouncedSearch);
-  const { data: stats, isLoading } = useVendorStat();
+  const { data: stats, isLoading } = useAllVendorsStats();
   const { data: dashboard, isLoading: isDashboardLoading } = useDashboard();
 
   const vendors = data?.data;

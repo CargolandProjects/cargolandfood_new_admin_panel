@@ -10,42 +10,40 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { formatDate3, formatTime3 } from "@/lib/utils";
 import TransactionRowSkeleton from "./TransactionRowSkeleton";
+import {
+  TransactionType,
+  VendorTransaction,
+} from "@/lib/services/vendor.service";
 
-export type TransactionType = "Withdraw" | "Payout" | "Refund" | "Deposit";
-export type TransactionStatus = "Successful" | "Pending" | "Failed";
+export type TransactionStatus = "SUCCESS" | "PENDING" | "FAILED";
 export type TransactionMethod = "Mobile money" | "Bank transfer" | "Cash";
-
-export interface VendorTransaction {
-  id: string;
-  details: string;
-  type: TransactionType;
-  amount: number;
-  dateTime: string;
-  method: TransactionMethod;
-  status: TransactionStatus;
-}
 
 interface TransactionHistoryProps {
   transactions: VendorTransaction[];
   isLoading?: boolean;
 }
 
-const typeStyles: Record<TransactionType, string> = {
-  Withdraw: "bg-emerald-50 text-emerald-700",
-  Payout: "bg-sky-50 text-sky-700",
-  Refund: "bg-orange-50 text-orange-700",
-  Deposit: "bg-violet-50 text-violet-700",
+type TxnDisplay = {
+  style: string;
+  title: string;
+};
+
+const txnType: Record<TransactionType, TxnDisplay> = {
+  CREDIT: { style: "bg-sky-50 text-sky-700", title: "Payout" },
+  DEBIT: { style: "bg-emerald-50 text-emerald-700", title: "Withdraw" },
+  // Refund: "bg-orange-50 text-orange-700",
+  // Deposit: "bg-violet-50 text-violet-700",
 };
 
 const statusStyles: Record<TransactionStatus, { pill: string; dot: string }> = {
-  Successful: { pill: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
-  Pending: { pill: "bg-amber-50 text-amber-700", dot: "bg-amber-500" },
-  Failed: { pill: "bg-red-50 text-red-700", dot: "bg-red-500" },
+  SUCCESS: { pill: "bg-emerald-50 text-emerald-500", dot: "bg-emerald-500" },
+  PENDING: { pill: "bg-amber-50 text-amber-500", dot: "bg-amber-500" },
+  FAILED: { pill: "bg-red-50 text-red-700", dot: "bg-red-500" },
 };
 
-const formatNaira = (v: number) => `₦${v.toLocaleString()}`;
+const formatNaira = (v: string) => `₦${Number(v).toLocaleString()}`;
 
 const VendorTxHistory = ({
   transactions,
@@ -74,7 +72,7 @@ const VendorTxHistory = ({
   return (
     <section className="">
       {/* Table */}
-      <Table>
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow className="border-b border-gray-100 bg-gray-100">
             <TableHead className="w-12 pl-6">
@@ -86,7 +84,7 @@ const VendorTxHistory = ({
               />
             </TableHead>
             <TableHead className="py-3 text-xs font-medium text-gray-500">
-              ID
+              Transaction Ref
             </TableHead>
             <TableHead className="text-xs font-medium text-gray-500">
               Details
@@ -100,9 +98,9 @@ const VendorTxHistory = ({
             <TableHead className="text-xs font-medium text-gray-500">
               Date/Time
             </TableHead>
-            <TableHead className="text-xs font-medium text-gray-500">
+            {/* <TableHead className="text-xs font-medium text-gray-500">
               Method
-            </TableHead>
+            </TableHead> */}
             <TableHead className="pr-6 text-xs font-medium text-gray-500">
               Status
             </TableHead>
@@ -140,45 +138,39 @@ const VendorTxHistory = ({
                     aria-label={`Select ${txn.id}`}
                   />
                 </TableCell>
-                <TableCell className="text-sm font-medium text-gray-900">
-                  {txn.id}
+                <TableCell className="text-sm font-medium text-gray-900 truncate">
+                  {txn.reference}
                 </TableCell>
                 <TableCell className="text-sm text-gray-700">
-                  {txn.details}
+                  {txn.description ?? ""}
                 </TableCell>
                 <TableCell>
                   <span
-                    className={cn(
-                      "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium",
-                      typeStyles[txn.type],
-                    )}
+                    className={`${txnType[txn.type].style} inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium`}
                   >
-                    {txn.type}
+                    {txnType[txn.type].title}
                   </span>
                 </TableCell>
                 <TableCell className="text-sm font-semibold text-gray-900">
                   {formatNaira(txn.amount)}
                 </TableCell>
-                <TableCell className="whitespace-pre-line text-sm text-gray-700">
-                  {txn.dateTime}
-                </TableCell>
                 <TableCell className="text-sm text-gray-700">
-                  {txn.method}
+                  <p className="font-medium">
+                    {formatDate3(txn.createdAt, false)}
+                  </p>
+                  <p className="">{formatTime3(txn.createdAt)}</p>
                 </TableCell>
+                {/* <TableCell className="text-sm text-gray-700">
+                  {txn.method}
+                </TableCell> */}
                 <TableCell className="pr-6">
                   <span
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-                      statusStyles[txn.status].pill,
-                    )}
+                    className={`${statusStyles[txn.status].pill} inline-flex items-center gap-1.5 rounded-[4px] px-2.5 py-1 text-xs font-medium capitalize`}
                   >
                     <span
-                      className={cn(
-                        "h-1.5 w-1.5 rounded-full",
-                        statusStyles[txn.status].dot,
-                      )}
+                      className={`${statusStyles[txn.status].dot} size-2 rounded-full`}
                     />
-                    {txn.status}
+                    {txn.status.toLowerCase()}
                   </span>
                 </TableCell>
               </TableRow>
