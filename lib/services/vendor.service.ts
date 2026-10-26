@@ -171,13 +171,13 @@ export interface VendorTransaction {
   reference: string;
   description: string | null;
   orderId: string | null;
-  status: "PENDING" | "SUCCESS";
+  status: "PENDING" | "PAID";
   createdAt: string;
 }
 
 export interface VendorPaymentStats {
   pendingPayout: {
-    balance: string;
+    balance: string | null;
   };
   vendorTransactions: VendorTransaction[];
   totalPayout: number;
@@ -187,7 +187,7 @@ export interface VendorDashboardStats {
   totalOrders: number;
   totalRevenue: {
     _sum: {
-      total: string;
+      total: string | null;
     };
   };
   completedOrder: number;
