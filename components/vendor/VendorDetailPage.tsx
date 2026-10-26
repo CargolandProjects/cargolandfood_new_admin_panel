@@ -211,7 +211,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         <StatCard
           title="Total Orders"
           loading={isLoading}
-          value={`₦${vendorStats?.totalOrders.toLocaleString() ?? "0"}`}
+          value={vendorStats?.totalOrders.toLocaleString() ?? "0"}
           subtext="Order"
           trend="+2%"
           color="text-green-500"
@@ -220,7 +220,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         <StatCard
           title="Total Revenue"
           loading={isLoading}
-          value={`₦${Number(vendorStats?.totalRevenue._sum.total).toLocaleString() ?? "0"}`}
+          value={`₦${Number(vendorStats?.totalRevenue?._sum?.total ?? "0").toLocaleString()}`}
           subtext="Revenue"
           trend="+2%"
           color="text-green-500"
@@ -229,7 +229,7 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         <StatCard
           title="Successful Orders"
           loading={isLoading}
-          value={`₦${vendorStats?.completedOrder.toLocaleString() ?? "0"}`}
+          value={vendorStats?.completedOrder.toLocaleString() ?? "0"}
           subtext="Successful"
           trend="-4"
           color="text-red-500"
@@ -238,11 +238,9 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         <StatCard
           title="Pending Payout"
           loading={isLoading}
-          value={`₦${
-            Number(
-              vendorStats?.payment.pendingPayout.balance,
-            ).toLocaleString() ?? "0"
-          }`}
+          value={`₦${Number(
+            vendorStats?.payment?.pendingPayout?.balance ?? "0",
+          ).toLocaleString()}`}
           subtext="Payout"
           trend="+4"
           color="text-green-500"
@@ -255,8 +253,8 @@ export default function VendorDetailPage({ vendorId }: { vendorId: string }) {
         <StatCard
           title="Total Payouts"
           loading={isLoading}
-          value={`₦${vendorStats?.payment.totalPayout.toLocaleString() ?? "0"}`}
-          subtext="Order"
+          value={vendorStats?.payment.totalPayout.toLocaleString() ?? "0"}
+          subtext="Payouts"
           trend="+2%"
           color="text-green-500"
           footerLabel="Total Size"

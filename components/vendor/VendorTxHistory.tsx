@@ -17,7 +17,7 @@ import {
   VendorTransaction,
 } from "@/lib/services/vendor.service";
 
-export type TransactionStatus = "SUCCESS" | "PENDING" | "FAILED";
+export type TransactionStatus = "PAID" | "PENDING" | "FAILED";
 export type TransactionMethod = "Mobile money" | "Bank transfer" | "Cash";
 
 interface TransactionHistoryProps {
@@ -38,7 +38,7 @@ const txnType: Record<TransactionType, TxnDisplay> = {
 };
 
 const statusStyles: Record<TransactionStatus, { pill: string; dot: string }> = {
-  SUCCESS: { pill: "bg-emerald-50 text-emerald-500", dot: "bg-emerald-500" },
+  PAID: { pill: "bg-emerald-50 text-emerald-500", dot: "bg-emerald-500" },
   PENDING: { pill: "bg-amber-50 text-amber-500", dot: "bg-amber-500" },
   FAILED: { pill: "bg-red-50 text-red-700", dot: "bg-red-500" },
 };
@@ -70,9 +70,9 @@ const VendorTxHistory = ({
   };
 
   return (
-    <section className="">
+    <section>
       {/* Table */}
-      <Table className="table-fixed">
+      <Table className="">
         <TableHeader>
           <TableRow className="border-b border-gray-100 bg-gray-100">
             <TableHead className="w-12 pl-6">
@@ -165,10 +165,10 @@ const VendorTxHistory = ({
                 </TableCell> */}
                 <TableCell className="pr-6">
                   <span
-                    className={`${statusStyles[txn.status].pill} inline-flex items-center gap-1.5 rounded-[4px] px-2.5 py-1 text-xs font-medium capitalize`}
+                    className={`${statusStyles[txn.status]?.pill} inline-flex items-center gap-1.5 rounded-[4px] px-2.5 py-1 text-xs font-medium capitalize`}
                   >
                     <span
-                      className={`${statusStyles[txn.status].dot} size-2 rounded-full`}
+                      className={`${statusStyles[txn.status]?.dot} size-2 rounded-full`}
                     />
                     {txn.status.toLowerCase()}
                   </span>
