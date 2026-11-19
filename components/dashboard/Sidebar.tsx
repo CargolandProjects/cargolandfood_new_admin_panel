@@ -225,14 +225,14 @@ const sidebarData = [
     href: "/promotion-management",
   },
 
-  {
-    name: "Employees",
-    icon: "/images/icons/UsersThree.png",
-    children: [
-      { name: "Add new employee", href: "#" },
-      { name: "Employee list", href: "/employees/list" },
-    ],
-  },
+  // {
+  //   name: "Employees",
+  //   icon: "/images/icons/UsersThree.png",
+  //   children: [
+  //     { name: "Add new employee", href: "#" },
+  //     { name: "Employee list", href: "/employees/list" },
+  //   ],
+  // },
 
   {
     name: "Transaction Management",
@@ -245,41 +245,41 @@ const sidebarData = [
     ],
   },
 
-  {
-    name: "Report Management",
-    icon: "/images/icons/ChartPieSlice.png",
-    children: [
-      { name: "Transaction report" },
-      { name: "Expense report" },
+  // {
+  //   name: "Report Management",
+  //   icon: "/images/icons/ChartPieSlice.png",
+  //   children: [
+  //     { name: "Transaction report" },
+  //     { name: "Expense report" },
 
-      {
-        name: "Disbursement report",
-        subChildren: [{ name: "Restaurant" }, { name: "Delivery personnel" }],
-      },
+  //     {
+  //       name: "Disbursement report",
+  //       subChildren: [{ name: "Restaurant" }, { name: "Delivery personnel" }],
+  //     },
 
-      {
-        name: "Customer report",
-        subChildren: [{ name: "Wallet report" }],
-      },
+  //     {
+  //       name: "Customer report",
+  //       subChildren: [{ name: "Wallet report" }],
+  //     },
 
-      {
-        name: "Restaurant report",
-        subChildren: [{ name: "Restaurant report" }],
-      },
+  //     {
+  //       name: "Restaurant report",
+  //       subChildren: [{ name: "Restaurant report" }],
+  //     },
 
-      {
-        name: "Order report",
-        subChildren: [
-          { name: "Regular order report" },
-          { name: "campaign order report" },
-        ],
-      },
+  //     {
+  //       name: "Order report",
+  //       subChildren: [
+  //         { name: "Regular order report" },
+  //         { name: "campaign order report" },
+  //       ],
+  //     },
 
-      { name: "Food report" },
-      { name: "Tax report" },
-      { name: "Restaurant VAT report" },
-    ],
-  },
+  //     { name: "Food report" },
+  //     { name: "Tax report" },
+  //     { name: "Restaurant VAT report" },
+  //   ],
+  // },
 
   {
     name: "Promos",
@@ -308,65 +308,65 @@ const sidebarData = [
     ],
   },
 
-  {
-    name: "Delivery management",
-    icon: "/images/icons/Moped.png",
-    children: [
-      { name: "Shift setup", href: "/delivery_management/shift-setup" },
-      {
-        name: "Vehicle categoory setup",
-        href: "/delivery_management/vehicle-category",
-      },
-      {
-        name: "Delivery personnel",
-        subChildren: [
-          { name: "Request", href: "/delivery_management/request" },
-          {
-            name: "Add new personnel",
-            href: "/delivery_management/add-personnel",
-          },
-          {
-            name: "Personnel list",
-            href: "/delivery_management/personnel-list",
-          },
-          {
-            name: "Bonus",
-            href: "/delivery_management/bonus",
-          },
-          { name: "Inactive requests" },
-          { name: "Incentives history" },
-        ],
-      },
+  // {
+  //   name: "Delivery management",
+  //   icon: "/images/icons/Moped.png",
+  //   children: [
+  //     { name: "Shift setup", href: "/delivery_management/shift-setup" },
+  //     {
+  //       name: "Vehicle categoory setup",
+  //       href: "/delivery_management/vehicle-category",
+  //     },
+  //     {
+  //       name: "Delivery personnel",
+  //       subChildren: [
+  //         { name: "Request", href: "/delivery_management/request" },
+  //         {
+  //           name: "Add new personnel",
+  //           href: "/delivery_management/add-personnel",
+  //         },
+  //         {
+  //           name: "Personnel list",
+  //           href: "/delivery_management/personnel-list",
+  //         },
+  //         {
+  //           name: "Bonus",
+  //           href: "/delivery_management/bonus",
+  //         },
+  //         { name: "Inactive requests" },
+  //         { name: "Incentives history" },
+  //       ],
+  //     },
 
-      { name: "Coupons", href: "/delivery_management/coupons" },
-    ],
-  },
+  //     { name: "Coupons", href: "/delivery_management/coupons" },
+  //   ],
+  // },
 
-  {
-    name: "Bussiness Settings",
-    icon: "/images/icons/Nut.png",
-    children: [
-      {
-        name: "Campaigns report",
-        subChildren: [{ name: "Basic campaign" }, { name: "Food campaign" }],
-      },
+  // {
+  //   name: "Bussiness Settings",
+  //   icon: "/images/icons/Nut.png",
+  //   children: [
+  //     {
+  //       name: "Campaigns report",
+  //       subChildren: [{ name: "Basic campaign" }, { name: "Food campaign" }],
+  //     },
 
-      { name: "Coupons" },
-    ],
-  },
+  //     { name: "Coupons" },
+  //   ],
+  // },
 
-  {
-    name: "Help & Support",
-    icon: "/images/icons/Chats.png",
-    children: [
-      {
-        name: "Campaigns report",
-        subChildren: [{ name: "Basic campaign" }, { name: "Food campaign" }],
-      },
+  // {
+  //   name: "Help & Support",
+  //   icon: "/images/icons/Chats.png",
+  //   children: [
+  //     {
+  //       name: "Campaigns report",
+  //       subChildren: [{ name: "Basic campaign" }, { name: "Food campaign" }],
+  //     },
 
-      { name: "Coupons" },
-    ],
-  },
+  //     { name: "Coupons" },
+  //   ],
+  // },
 
   {
     name: "Log Out",
