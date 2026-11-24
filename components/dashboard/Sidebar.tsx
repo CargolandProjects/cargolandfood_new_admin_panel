@@ -308,39 +308,39 @@ const sidebarData = [
     ],
   },
 
-  // {
-  //   name: "Delivery management",
-  //   icon: "/images/icons/Moped.png",
-  //   children: [
-  //     { name: "Shift setup", href: "/delivery_management/shift-setup" },
-  //     {
-  //       name: "Vehicle categoory setup",
-  //       href: "/delivery_management/vehicle-category",
-  //     },
-  //     {
-  //       name: "Delivery personnel",
-  //       subChildren: [
-  //         { name: "Request", href: "/delivery_management/request" },
-  //         {
-  //           name: "Add new personnel",
-  //           href: "/delivery_management/add-personnel",
-  //         },
-  //         {
-  //           name: "Personnel list",
-  //           href: "/delivery_management/personnel-list",
-  //         },
-  //         {
-  //           name: "Bonus",
-  //           href: "/delivery_management/bonus",
-  //         },
-  //         { name: "Inactive requests" },
-  //         { name: "Incentives history" },
-  //       ],
-  //     },
+  {
+    name: "Delivery management",
+    icon: "/images/icons/Moped.png",
+    children: [
+      { name: "Shift setup", href: "/delivery_management/shift-setup" },
+      {
+        name: "Vehicle categoory setup",
+        href: "/delivery_management/vehicle-category",
+      },
+      {
+        name: "Delivery personnel",
+        subChildren: [
+          { name: "Request", href: "/delivery_management/request" },
+          {
+            name: "Add new personnel",
+            href: "/delivery_management/add-personnel",
+          },
+          {
+            name: "Personnel list",
+            href: "/delivery_management/personnel-list",
+          },
+          {
+            name: "Bonus",
+            href: "/delivery_management/bonus",
+          },
+          { name: "Inactive requests" },
+          { name: "Incentives history" },
+        ],
+      },
 
-  //     { name: "Coupons", href: "/delivery_management/coupons" },
-  //   ],
-  // },
+      { name: "Coupons", href: "/delivery_management/coupons" },
+    ],
+  },
 
   // {
   //   name: "Bussiness Settings",
